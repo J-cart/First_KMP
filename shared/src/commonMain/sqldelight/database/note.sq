@@ -1,0 +1,21 @@
+CREATE TABLE NoteEntity(
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    desc TEXT,
+    dateCreated INTEGER NOT NULL
+);
+
+getAllNotes:
+SELECT * FROM NoteEntity;
+
+deleteAllNote:
+DELETE FROM NoteEntity;
+
+getNoteById:
+SELECT * FROM NoteEntity WHERE id = ?;
+
+insertNote:
+INSERT OR REPLACE INTO NoteEntity(id,title,desc,dateCreated) VALUES(?,?,?,?);
+
+deleteNoteById:
+DELETE FROM NoteEntity WHERE id = ?;

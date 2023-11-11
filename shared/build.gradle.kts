@@ -66,6 +66,13 @@ kotlin {
     }
 }
 
+sqldelight {
+    database("NoteDatabase"){
+        packageName = "com.tutorials.firstkmp.database"
+        sourceFolders = listOf("sqldelight")
+    }
+}
+
 android {
     namespace = "com.tutorials.firstkmp"
     compileSdk = 34

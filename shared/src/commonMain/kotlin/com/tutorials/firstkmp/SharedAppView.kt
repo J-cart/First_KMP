@@ -13,12 +13,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.tutorials.firstkmp.domain.NoteDataSource
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
 
 @OptIn(ExperimentalResourceApi::class)
 @Composable
-fun SharedAppView() {
+fun SharedAppView(
+    noteDataSource: NoteDataSource
+) {
 
     var greetingText by remember { mutableStateOf("Hello world") }
     var showImage by remember { mutableStateOf(false) }
