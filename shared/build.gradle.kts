@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidLibrary)
     id("org.jetbrains.compose")
+    id("com.squareup.sqldelight")
 }
 
 kotlin {
@@ -32,6 +33,11 @@ kotlin {
                 implementation(compose.material3)
                 @OptIn(org.jetbrains.compose.ExperimentalComposeLibrary::class)
                 implementation(compose.components.resources)
+
+                implementation("com.squareup.sqldelight:runtime:1.5.5")
+                implementation("com.squareup.sqldelight:coroutines-extensions:1.5.5")
+                implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.4.0")
+
             }
         }
 
@@ -40,6 +46,14 @@ kotlin {
                 api(libs.androidx.activity.compose)//"androidx.activity:activity-compose:1.7.2"
                 api(libs.androidx.appcompat)
                 api(libs.androidx.core.ktx)
+
+                implementation("com.squareup.sqldelight:android-driver:1.5.5")
+            }
+        }
+
+        val iosMain by creating {
+            dependencies {
+                implementation("com.squareup.sqldelight:native-driver:1.5.5")
             }
         }
 
