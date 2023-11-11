@@ -29,7 +29,7 @@ kotlin {
             dependencies{
                 implementation(compose.runtime)
                 implementation(compose.foundation)
-                implementation(compose.material)
+                implementation(compose.material3)
                 @OptIn(org.jetbrains.compose.ExperimentalComposeLibrary::class)
                 implementation(compose.components.resources)
             }
@@ -38,8 +38,8 @@ kotlin {
         val androidMain by getting {
             dependencies {
                 api(libs.androidx.activity.compose)//"androidx.activity:activity-compose:1.7.2"
-                api("androidx.appcompat:appcompat:1.6.1")
-                api("androidx.core:core-ktx:1.10.1")
+                api(libs.androidx.appcompat)
+                api(libs.androidx.core.ktx)
             }
         }
 
