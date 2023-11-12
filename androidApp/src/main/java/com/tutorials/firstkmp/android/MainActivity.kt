@@ -10,10 +10,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import com.tutorials.firstkmp.SharedAppView
 import com.tutorials.firstkmp.core.DatabaseDriverFactory
 import com.tutorials.firstkmp.data.SqlDelightNoteDataSourceImpl
 import com.tutorials.firstkmp.database.NoteDatabase
+import com.tutorials.firstkmp.presentation.screen.NoteHomeScreen
 
 class MainActivity : ComponentActivity() {
     private val db = NoteDatabase(driver = DatabaseDriverFactory(this).createDriver())
@@ -25,7 +25,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                   SharedAppView(
+                   NoteHomeScreen(
                        SqlDelightNoteDataSourceImpl(db)
                    )
                 }
