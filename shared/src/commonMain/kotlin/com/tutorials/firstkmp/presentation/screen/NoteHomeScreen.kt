@@ -4,16 +4,20 @@ package com.tutorials.firstkmp.presentation.screen
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
@@ -37,7 +41,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -46,8 +49,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -71,9 +74,7 @@ fun NoteHomeScreen(noteDataSource: NoteDataSource) {
         getViewModel(key = Unit, viewModelFactory { SharedViewModel(noteDataSource) })
 
     val lazyListState = rememberLazyListState()
-    var query by remember {
-        mutableStateOf("")
-    }
+
 
     var deleteDialogText by remember {
         mutableStateOf("")
@@ -133,47 +134,48 @@ fun NoteHomeScreen(noteDataSource: NoteDataSource) {
                 .fillMaxSize()
                 .padding(paddingValues = paddingValues)
         ) {
-            CustomSearchBar(onValueChange = {
-                query = it
-            }, query = query)
 
-            when {
+            Column(modifier = Modifier.weight(1f)) {
 
-                uiState.noteList.isEmpty() -> {
+                when {
 
-                    Column(
-                        modifier = Modifier.fillMaxSize(),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
-                    ) {
-                        Image(
-                            modifier = Modifier.fillMaxSize(0.55f),
-                            painter = painterResource("compose-multiplatform.xml"),
-                            contentDescription = "Empty"
-                        )
+                    uiState.noteList.isEmpty() -> {
+
+                        Column(
+                            modifier = Modifier.fillMaxSize(),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            Image(
+                                modifier = Modifier.fillMaxSize(0.55f),
+                                painter = painterResource("compose-multiplatform.xml"),
+                                contentDescription = "Empty"
+                            )
+
+                        }
+
 
                     }
 
+                    uiState.noteList.isNotEmpty() -> {
+                        NoteGroupList(
+                            noteItems = uiState.noteList,
+                            state = lazyListState,
+                            onClick = {
+                                // TODO: Navigate to view note screen
+                            },
+                            onLongClick = {
+                                singleDialogState = true
+                                deleteDialogText = "Are you sure you want to delete this item?"
+                                noteToDelete = it
+                            })
+
+                    }
 
                 }
-
-                uiState.noteList.isNotEmpty() -> {
-                    NoteList(
-                        noteItems = uiState.noteList,
-                        state = lazyListState,
-                        query = query,
-                        onClick = {
-                            // TODO: Navigate to view note screen
-                        },
-                        onLongClick = {
-                            singleDialogState = true
-                            deleteDialogText = "Are you sure you want to delete this item?"
-                            noteToDelete = it
-                        })
-
-                }
-
             }
+
+            HomeBottomMenu(modifier = Modifier.height(60.dp))
 
             DeleteDialog(
                 updateDialogState = {
@@ -191,7 +193,7 @@ fun NoteHomeScreen(noteDataSource: NoteDataSource) {
                 text = deleteDialogText
             ) { sharedViewModel.deleteNote(noteToDelete.id) }
 
-            AddNoteDialog(
+            AddNoteGroupDialog(
                 dialogState = addNoteDialogState,
                 showDialog = {
                     addNoteDialogState = it
@@ -206,68 +208,18 @@ fun NoteHomeScreen(noteDataSource: NoteDataSource) {
 
 }
 
-@Composable
-fun CustomSearchBar(onValueChange: (String) -> Unit, query: String) {
-
-    val icon by remember(query) {
-        mutableStateOf(
-            if (query.isEmpty()) {
-                Icons.Default.Search
-            } else {
-                Icons.Default.Clear
-            }
-        )
-    }
-    TextField(
-        value = query,
-        onValueChange = { onValueChange(it) },
-        placeholder = { Text(text = "Search ...") },
-        shape = RoundedCornerShape(12.dp),
-        singleLine = true,
-        colors = TextFieldDefaults.colors(
-            focusedIndicatorColor = Color.Transparent,
-            unfocusedIndicatorColor = Color.Transparent,
-            cursorColor = Color.Black
-        ), trailingIcon = {
-            IconButton(onClick = {
-                if (query.isNotEmpty()) {
-                    onValueChange("")
-                } else {
-                    // TODO: search item(apparently, since `query` is a state,
-                    //  there might be no need for this `else` block)
-                }
-            }) {
-                Icon(imageVector = icon, contentDescription = "action")
-            }
-        },
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(start = 12.dp, end = 12.dp, top = 5.dp, bottom = 12.dp)
-    )
-}
 
 
 @Composable
-fun NoteList(
+fun NoteGroupList(
     noteItems: List<Note>,
     state: LazyListState,
-    query: String,
     onClick: (noteItem: Note) -> Unit,
     onLongClick: (noteItem: Note) -> Unit
 ) {
-    val items = if (query.isEmpty()) {
-        noteItems
-    } else {
-        noteItems.filter {
-            it.desc.contains(query, ignoreCase = true) || it.title.contains(
-                query,
-                ignoreCase = true
-            )
-        }
-    }
     LazyColumn(state = state) {
-        itemsIndexed(items) { index, item ->
-            NoteListItem(noteItem = item, onLongClick = {
+        itemsIndexed(noteItems) { index, item ->
+            NoteGroupItem(noteItem = item, onLongClick = {
                 onLongClick(item)
             }, onClick = {
                 onClick(item)
@@ -276,53 +228,6 @@ fun NoteList(
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class, ExperimentalFoundationApi::class)
-@Composable
-fun NoteListItem(
-    noteItem: Note,
-    onClick: () -> Unit,
-    onLongClick: () -> Unit
-) {
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 10.dp, vertical = 3.dp)
-            .height(120.dp)
-            .clip(RoundedCornerShape(18.dp))
-            .combinedClickable(interactionSource = remember {
-                MutableInteractionSource()
-            }, indication = rememberRipple(bounded = false), onClick = {
-                onClick()
-            }, onLongClick = {
-                onLongClick()
-
-            }), color = MaterialTheme.colorScheme.primary
-    ) {
-        Row {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(25.dp)
-            ) {
-                if (noteItem.title.isNotEmpty()) {
-                    Text(
-                        text = noteItem.title,
-                        fontWeight = FontWeight.Bold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
-                if (noteItem.desc.isNotEmpty()) {
-                    Text(text = noteItem.desc, maxLines = 1, overflow = TextOverflow.Ellipsis)
-
-                }
-
-                Text(text = noteItem.dateCreated.toString(), fontStyle = FontStyle.Italic)
-            }
-        }
-
-    }
-}
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -415,7 +320,7 @@ fun DeleteDialog(
 }
 
 @Composable
-fun AddNoteDialog(
+fun AddNoteGroupDialog(
     dialogState: Boolean,
     showDialog: (Boolean) -> Unit,
     addNoteAction: (Note) -> Unit
@@ -528,4 +433,138 @@ fun AddNoteDialog(
         }
     }
 
+}
+
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun NoteGroupItem(
+    noteItem: Note,
+    onClick: () -> Unit,
+    onLongClick: () -> Unit
+) {
+    val dotColor by remember {
+        mutableStateOf(
+            listOf(
+                Color.Cyan,
+                Color.Black,
+                Color.Red,
+                Color.Green,
+                Color.Yellow
+            )
+        )
+    }
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 10.dp)
+            .height(50.dp)
+            .clip(RectangleShape)
+            .combinedClickable(interactionSource = remember {
+                MutableInteractionSource()
+            }, indication = rememberRipple(bounded = false), onClick = {
+                onClick()
+            }, onLongClick = {
+                onLongClick()
+
+            })
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+        ) {
+            Row() {
+                Box(
+                    modifier = Modifier
+                        .size(12.dp)
+                        .background(color = dotColor.random(), shape = CircleShape)
+                        .align(Alignment.CenterVertically)
+                        .padding(start = 16.dp)
+                )
+                Column(modifier = Modifier.padding(start = 16.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(end = 10.dp),
+                            text = noteItem.title,
+                            overflow = TextOverflow.Ellipsis,
+                            maxLines = 1,
+                            fontSize = 17.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(text = "Nov 9, Thu", color = Color.Gray, fontSize = 12.sp)
+                    }
+                    if(noteItem.desc.isNotEmpty()) {
+                        Text(
+                            modifier = Modifier
+                                .fillMaxWidth(0.8f)
+                                .padding(top = 4.dp),
+                            text = "Latest group note",
+                            color = Color.Gray,
+                            fontSize = 14.sp,
+                            overflow = TextOverflow.Ellipsis,
+                            maxLines = 1
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun HomeBottomMenu(modifier: Modifier) {
+    Surface {
+        Box {
+            Row(
+                modifier = modifier
+                    .fillMaxWidth()
+                    .padding(start = 16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(modifier = Modifier
+                    .padding(10.dp)
+                    .clickable {
+                        // TODO: open menu
+                    }) {
+                    Row {
+                        Icon(
+                            imageVector = Icons.Default.Menu,
+                            contentDescription = "menu",
+                            tint = Color.Gray
+                        )
+                        Text(
+                            modifier = Modifier.padding(start = 8.dp),
+                            text = "Menu",
+                            color = Color.Gray
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.width(16.dp))
+                Box(modifier = Modifier
+                    .padding(10.dp)
+                    .clickable {
+                        // TODO: open search
+                    }) {
+                    Row {
+                        Icon(
+                            imageVector = Icons.Default.Search,
+                            contentDescription = "search",
+                            tint = Color.Gray
+                        )
+                        Text(
+                            modifier = Modifier.padding(start = 8.dp),
+                            text = "Search",
+                            color = Color.Gray
+                        )
+                    }
+                }
+            }
+        }
+    }
 }
