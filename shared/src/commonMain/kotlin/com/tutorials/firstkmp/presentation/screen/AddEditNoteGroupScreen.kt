@@ -35,11 +35,25 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
+import cafe.adriel.voyager.core.screen.Screen
+import cafe.adriel.voyager.navigator.LocalNavigator
+import cafe.adriel.voyager.navigator.currentOrThrow
 
-
+class AddEditNoteGroupScreen :Screen{
+    @Composable
+    override fun Content() {
+        val navigator = LocalNavigator.currentOrThrow
+        AddEditNoteGroup(onNavigateUp = {
+            navigator.pop()
+        }, onNavigate = {
+            navigator.replace(GroupNotesScreen())
+        }
+        )
+    }
+}
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun NewNoteGroupScreen() {
+fun AddEditNoteGroup(onNavigateUp:()->Unit, onNavigate:()->Unit) {
     var noteGroupTitle by remember {
         mutableStateOf("")
     }
@@ -49,7 +63,7 @@ fun NewNoteGroupScreen() {
         TopAppBar(
             title = { Text(text = "New note group", modifier = Modifier.padding(start = 10.dp)) },
             navigationIcon = {
-                Icon(
+                Icon(modifier = Modifier.clickable { onNavigateUp() },
                     imageVector = Icons.Default.KeyboardArrowLeft,
                     contentDescription = "Back"
                 )
@@ -63,7 +77,9 @@ fun NewNoteGroupScreen() {
     }, floatingActionButton = {
         FloatingActionButton(
             shape = CircleShape,
-            onClick = { /*TODO: navigate to note group items*/ }) {
+            onClick = { /*TODO: navigate to note group items*/
+                onNavigate()
+            }) {
             Icon(imageVector = Icons.Default.Check, contentDescription = "Continue")
         }
     }

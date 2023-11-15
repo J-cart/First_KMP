@@ -56,6 +56,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import cafe.adriel.voyager.core.screen.Screen
+import cafe.adriel.voyager.navigator.LocalNavigator
+import cafe.adriel.voyager.navigator.currentOrThrow
 import com.tutorials.firstkmp.domain.Note
 import com.tutorials.firstkmp.domain.NoteDataSource
 import com.tutorials.firstkmp.presentation.SharedViewModel
@@ -66,9 +69,21 @@ import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
 
 
+data class HomeScreen(private val noteDataSource: NoteDataSource):Screen{
+
+
+    @Composable
+    override fun Content() {
+        val navigator = LocalNavigator.currentOrThrow
+        NoteHomeScreen(noteDataSource, onNavigate = {
+            navigator.push(AddEditNoteGroupScreen())
+        })
+    }
+}
+
 @OptIn(ExperimentalResourceApi::class)
 @Composable
-fun NoteHomeScreen(noteDataSource: NoteDataSource) {
+fun NoteHomeScreen(noteDataSource: NoteDataSource,onNavigate:()->Unit) {
 
     val sharedViewModel =
         getViewModel(key = Unit, viewModelFactory { SharedViewModel(noteDataSource) })
@@ -123,7 +138,8 @@ fun NoteHomeScreen(noteDataSource: NoteDataSource) {
                 contentDescription = "Add Note",
                 action = {
                     // TODO: Navigate to add note screen
-                    addNoteDialogState = true
+                         onNavigate()
+//                    addNoteDialogState = true
                 },
                 icon = Icons.Default.Add
             )

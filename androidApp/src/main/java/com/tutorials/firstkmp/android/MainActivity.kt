@@ -13,7 +13,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.tutorials.firstkmp.core.DatabaseDriverFactory
 import com.tutorials.firstkmp.data.SqlDelightNoteDataSourceImpl
 import com.tutorials.firstkmp.database.NoteDatabase
-import com.tutorials.firstkmp.presentation.screen.NoteHomeScreen
+import com.tutorials.firstkmp.presentation.screen.MainView
 
 class MainActivity : ComponentActivity() {
     private val db = NoteDatabase(driver = DatabaseDriverFactory(this).createDriver())
@@ -25,7 +25,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                   NoteHomeScreen(
+                   MainView(
                        SqlDelightNoteDataSourceImpl(db)
                    )
                 }

@@ -43,6 +43,14 @@ kotlin {
                 api("dev.icerock.moko:mvvm-flow-compose:0.16.1") // api mvvm-flow, binding extensions for Compose Multiplatform
                 api("dev.icerock.moko:mvvm-flow:0.16.1") // api mvvm-core, CFlow for native and binding extensions
 
+
+                val voyagerVersion = "1.0.0-rc10"
+
+                // Multiplatform
+
+                // Navigator
+                implementation("cafe.adriel.voyager:voyager-navigator:$voyagerVersion")
+
             }
         }
 

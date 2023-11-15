@@ -36,12 +36,24 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import cafe.adriel.voyager.core.screen.Screen
+import cafe.adriel.voyager.navigator.LocalNavigator
+import cafe.adriel.voyager.navigator.currentOrThrow
 
+class GroupNotesScreen():Screen{
 
+     @Composable
+     override fun Content() {
+         val navigator = LocalNavigator.currentOrThrow
+         NoteGroupItemScreen(groupTitle = "Some Note", onNavigateUp = {navigator.pop()})
+
+     }
+ }
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NoteGroupItemScreen(
-    groupTitle: String
+    groupTitle: String,
+    onNavigateUp:()->Unit
 ) {
     var noteText by remember {
         mutableStateOf("")
@@ -51,7 +63,7 @@ fun NoteGroupItemScreen(
         TopAppBar(
             title = { Text(text = groupTitle, modifier = Modifier.padding(start = 10.dp)) },
             navigationIcon = {
-                Icon(
+                Icon(modifier = Modifier.clickable { onNavigateUp() },
                     imageVector = Icons.Default.KeyboardArrowLeft,
                     contentDescription = "Back"
                 )
