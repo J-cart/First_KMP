@@ -1,5 +1,7 @@
 CREATE TABLE NoteEntity(
     id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    groupId INTEGER NOT NULL,
+    groupUuid INTEGER NOT NULL,
     title TEXT NOT NULL,
     desc TEXT NOT NULL,
     dateCreated INTEGER NOT NULL
@@ -15,7 +17,10 @@ getNoteById:
 SELECT * FROM NoteEntity WHERE id = ?;
 
 insertNote:
-INSERT OR REPLACE INTO NoteEntity(id,title,desc,dateCreated) VALUES(?,?,?,?);
+INSERT OR REPLACE INTO NoteEntity(id,title,groupId,groupUuid,desc,dateCreated) VALUES(?,?,?,?,?,?);
 
 deleteNoteById:
 DELETE FROM NoteEntity WHERE id = ?;
+
+getAllNotesByGroupUuid:
+SELECT * FROM NoteEntity WHERE groupUuid = ?;

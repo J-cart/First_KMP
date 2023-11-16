@@ -18,14 +18,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.CornerSize
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.ripple.rememberRipple
@@ -37,11 +34,9 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.*
@@ -55,38 +50,34 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
-import com.tutorials.firstkmp.domain.Note
 import com.tutorials.firstkmp.domain.NoteDataSource
+import com.tutorials.firstkmp.domain.NoteGroup
 import com.tutorials.firstkmp.presentation.SharedViewModel
-import dev.icerock.moko.mvvm.compose.getViewModel
-import dev.icerock.moko.mvvm.compose.viewModelFactory
-import kotlinx.datetime.Clock
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
 
 
-data class HomeScreen(private val noteDataSource: NoteDataSource):Screen{
+data class HomeScreen(private val noteDataSource: NoteDataSource,private val sharedViewModel: SharedViewModel):Screen{
 
 
     @Composable
     override fun Content() {
         val navigator = LocalNavigator.currentOrThrow
-        NoteHomeScreen(noteDataSource, onNavigate = {
-            navigator.push(AddEditNoteGroupScreen())
-        })
+        NoteHomeScreen(onViewGroupNavigate = {
+            navigator.push(GroupNotesScreen(it, sharedViewModel))
+        }, onAddGroupNavigate = {
+            navigator.push(AddEditNoteGroupScreen(sharedViewModel))
+        }, sharedViewModel)
     }
 }
 
 @OptIn(ExperimentalResourceApi::class)
 @Composable
-fun NoteHomeScreen(noteDataSource: NoteDataSource,onNavigate:()->Unit) {
+fun NoteHomeScreen(onViewGroupNavigate:(Long)->Unit,onAddGroupNavigate:()->Unit,sharedViewModel: SharedViewModel) {
 
-    val sharedViewModel =
-        getViewModel(key = Unit, viewModelFactory { SharedViewModel(noteDataSource) })
 
     val lazyListState = rememberLazyListState()
 
@@ -96,7 +87,7 @@ fun NoteHomeScreen(noteDataSource: NoteDataSource,onNavigate:()->Unit) {
     }
 
     var noteToDelete by remember {
-        mutableStateOf(Note())
+        mutableStateOf(NoteGroup())
     }
 
     var dialogState by remember {
@@ -105,14 +96,11 @@ fun NoteHomeScreen(noteDataSource: NoteDataSource,onNavigate:()->Unit) {
     var singleDialogState by remember {
         mutableStateOf(false)
     }
-    var addNoteDialogState by remember {
-        mutableStateOf(false)
-    }
 
-    val uiState by sharedViewModel.allNotesState.collectAsState()
+    val uiState by sharedViewModel.allNoteGroupState.collectAsState()
 
     LaunchedEffect(key1 = true) {
-        sharedViewModel.loadAllNotes()
+        sharedViewModel.loadAllNoteGroup()
     }
 
     Scaffold(
@@ -126,7 +114,7 @@ fun NoteHomeScreen(noteDataSource: NoteDataSource,onNavigate:()->Unit) {
                     )
                 },
                 onIconClick = {
-                    dialogState = uiState.noteList.isNotEmpty()
+                    dialogState = uiState.groupList.isNotEmpty()
                     deleteDialogText = "Are you sure you want to delete all items?"
                 },
                 iconState = remember {
@@ -135,11 +123,10 @@ fun NoteHomeScreen(noteDataSource: NoteDataSource,onNavigate:()->Unit) {
             )
         }, floatingActionButton = {
             GenericFab(
-                contentDescription = "Add Note",
+                contentDescription = "Add Group",
                 action = {
                     // TODO: Navigate to add note screen
-                         onNavigate()
-//                    addNoteDialogState = true
+                         onAddGroupNavigate()
                 },
                 icon = Icons.Default.Add
             )
@@ -155,7 +142,7 @@ fun NoteHomeScreen(noteDataSource: NoteDataSource,onNavigate:()->Unit) {
 
                 when {
 
-                    uiState.noteList.isEmpty() -> {
+                    uiState.groupList.isEmpty() -> {
 
                         Column(
                             modifier = Modifier.fillMaxSize(),
@@ -173,12 +160,13 @@ fun NoteHomeScreen(noteDataSource: NoteDataSource,onNavigate:()->Unit) {
 
                     }
 
-                    uiState.noteList.isNotEmpty() -> {
+                    uiState.groupList.isNotEmpty() -> {
                         NoteGroupList(
-                            noteItems = uiState.noteList,
+                            noteGroupItems = uiState.groupList,
                             state = lazyListState,
                             onClick = {
                                 // TODO: Navigate to view note screen
+                                onViewGroupNavigate(it.uuid)
                             },
                             onLongClick = {
                                 singleDialogState = true
@@ -199,7 +187,7 @@ fun NoteHomeScreen(noteDataSource: NoteDataSource,onNavigate:()->Unit) {
                 },
                 dialogState = dialogState,
                 text = deleteDialogText
-            ) { sharedViewModel.deleteAllNotes() }
+            ) { sharedViewModel.deleteAllNoteGroup() }
 
             DeleteDialog(
                 updateDialogState = {
@@ -207,17 +195,8 @@ fun NoteHomeScreen(noteDataSource: NoteDataSource,onNavigate:()->Unit) {
                 },
                 dialogState = singleDialogState,
                 text = deleteDialogText
-            ) { sharedViewModel.deleteNote(noteToDelete.id) }
+            ) { noteToDelete.id?.let { sharedViewModel.deleteNoteGroup(it) } }
 
-            AddNoteGroupDialog(
-                dialogState = addNoteDialogState,
-                showDialog = {
-                    addNoteDialogState = it
-                },
-                addNoteAction = {
-                    sharedViewModel.addNote(it)
-                }
-            )
         }
     }
 
@@ -228,14 +207,14 @@ fun NoteHomeScreen(noteDataSource: NoteDataSource,onNavigate:()->Unit) {
 
 @Composable
 fun NoteGroupList(
-    noteItems: List<Note>,
+    noteGroupItems: List<NoteGroup>,
     state: LazyListState,
-    onClick: (noteItem: Note) -> Unit,
-    onLongClick: (noteItem: Note) -> Unit
+    onClick: (noteGroupItem: NoteGroup) -> Unit,
+    onLongClick: (noteGroupItem: NoteGroup) -> Unit
 ) {
     LazyColumn(state = state) {
-        itemsIndexed(noteItems) { index, item ->
-            NoteGroupItem(noteItem = item, onLongClick = {
+        itemsIndexed(noteGroupItems) { index, item ->
+            NoteGroupItem(noteGroupItem = item, onLongClick = {
                 onLongClick(item)
             }, onClick = {
                 onClick(item)
@@ -335,127 +314,12 @@ fun DeleteDialog(
 
 }
 
-@Composable
-fun AddNoteGroupDialog(
-    dialogState: Boolean,
-    showDialog: (Boolean) -> Unit,
-    addNoteAction: (Note) -> Unit
-) {
-
-    var noteTitle by remember {
-        mutableStateOf("")
-    }
-    var noteDesc by remember {
-        mutableStateOf("")
-    }
-    if (dialogState) {
-        Dialog(onDismissRequest = { showDialog(false) }) {
-            Box(
-                modifier = Modifier.background(
-                    color = Color.White, shape = RoundedCornerShape(
-                        CornerSize(16.dp)
-                    )
-                )
-            ) {
-                Column(modifier = Modifier.wrapContentSize().padding(12.dp)) {
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(12.dp),
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        Text(text = "Add New Note", fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                    }
-
-
-
-                    OutlinedTextField(
-                        value = noteTitle,
-                        onValueChange = { noteTitle = it },
-                        placeholder = { Text(text = "Enter title") },
-                        shape = RoundedCornerShape(8.dp),
-                        singleLine = true,
-                        isError = noteTitle.isEmpty(),
-                        colors = TextFieldDefaults.colors(
-                            focusedIndicatorColor = Color.Transparent,
-                            unfocusedIndicatorColor = Color.Transparent,
-                            cursorColor = Color.Black
-                        ),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(start = 12.dp, end = 12.dp, top = 5.dp, bottom = 12.dp)
-                    )
-
-                    OutlinedTextField(
-                        value = noteDesc,
-                        onValueChange = { noteDesc = it },
-                        placeholder = { Text(text = "Enter description") },
-                        shape = RoundedCornerShape(8.dp),
-                        singleLine = true,
-                        colors = TextFieldDefaults.colors(
-                            focusedIndicatorColor = Color.Transparent,
-                            unfocusedIndicatorColor = Color.Transparent,
-                            cursorColor = Color.Black
-                        ),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(start = 12.dp, end = 12.dp, top = 5.dp, bottom = 12.dp)
-                    )
-
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(end = 10.dp), horizontalArrangement = Arrangement.End
-                    ) {
-                        ElevatedButton(
-                            modifier = Modifier.padding(horizontal = 3.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                contentColor = MaterialTheme.colorScheme.onSurface
-                            ),
-                            onClick = {
-                                showDialog(false)
-                            }) {
-                            Text(text = "CANCEL")
-
-                        }
-
-                        ElevatedButton(modifier = Modifier.padding(horizontal = 3.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                contentColor = MaterialTheme.colorScheme.onSurface
-                            ),
-                            onClick = {
-                                if (noteTitle.isNotEmpty()) {
-                                    addNoteAction(
-                                        Note(
-                                            id = Clock.System.now().toEpochMilliseconds(),
-                                            title = noteTitle,
-                                            desc = noteDesc.ifEmpty { "" },
-                                            dateCreated = Clock.System.now().toEpochMilliseconds()
-                                        )
-                                    )
-                                    noteTitle = ""
-                                    noteDesc = ""
-                                    showDialog(false)
-                                }
-                            }) {
-                            Text(text = "ADD")
-
-                        }
-                    }
-
-
-                }
-            }
-
-        }
-    }
-
-}
 
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun NoteGroupItem(
-    noteItem: Note,
+    noteGroupItem: NoteGroup,
     onClick: () -> Unit,
     onLongClick: () -> Unit
 ) {
@@ -507,26 +371,25 @@ fun NoteGroupItem(
                             modifier = Modifier
                                 .weight(1f)
                                 .padding(end = 10.dp),
-                            text = noteItem.title,
+                            text = noteGroupItem.title,
                             overflow = TextOverflow.Ellipsis,
                             maxLines = 1,
                             fontSize = 17.sp,
                             fontWeight = FontWeight.Bold
                         )
-                        Text(text = "Nov 9, Thu", color = Color.Gray, fontSize = 12.sp)
+                        Text(text = noteGroupItem.dateUpdated, color = Color.Gray, fontSize = 12.sp)
                     }
-                    if(noteItem.desc.isNotEmpty()) {
-                        Text(
-                            modifier = Modifier
-                                .fillMaxWidth(0.8f)
-                                .padding(top = 4.dp),
-                            text = "Latest group note",
-                            color = Color.Gray,
-                            fontSize = 14.sp,
-                            overflow = TextOverflow.Ellipsis,
-                            maxLines = 1
-                        )
-                    }
+                    Text(
+                        modifier = Modifier
+                            .fillMaxWidth(0.8f)
+                            .padding(top = 4.dp),
+                        text = "Latest group note",
+                        color = Color.Gray,
+                        fontSize = 14.sp,
+                        overflow = TextOverflow.Ellipsis,
+                        maxLines = 1
+                    )
+
                 }
             }
         }

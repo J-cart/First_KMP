@@ -1,0 +1,22 @@
+CREATE TABLE NoteGroupEntity(
+id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+uuid INTEGER NOT NULL,
+title TEXT NOT NULL,
+dateCreated TEXT NOT NULL,
+dateUpdated TEXT NOT NULL
+);
+
+getAllNoteGroup:
+SELECT * FROM NoteGroupEntity;
+
+deleteAllNoteGroup:
+DELETE FROM NoteGroupEntity;
+
+deleteNoteGroupById:
+DELETE FROM NoteGroupEntity WHERE id = ?;
+
+insertNoteGroup:
+INSERT OR REPLACE INTO NoteGroupEntity(id,uuid,title,dateCreated,dateUpdated) VALUES(?,?,?,?,?);
+
+getNoteGroupByUuid:
+SELECT * FROM NoteGroupEntity WHERE uuid = ?;

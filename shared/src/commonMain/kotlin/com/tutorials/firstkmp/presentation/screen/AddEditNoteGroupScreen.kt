@@ -38,22 +38,26 @@ import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
+import com.tutorials.firstkmp.domain.NoteGroup
+import com.tutorials.firstkmp.domain.time.DateTimeUtil
+import com.tutorials.firstkmp.presentation.SharedViewModel
+import kotlinx.datetime.Clock
 
-class AddEditNoteGroupScreen :Screen{
+data class AddEditNoteGroupScreen(private val sharedViewModel: SharedViewModel) :Screen{
     @Composable
     override fun Content() {
         val navigator = LocalNavigator.currentOrThrow
         AddEditNoteGroup(onNavigateUp = {
             navigator.pop()
         }, onNavigate = {
-            navigator.replace(GroupNotesScreen())
-        }
+            navigator.replace(GroupNotesScreen(groupUuid = it,sharedViewModel))
+        }, sharedViewModel = sharedViewModel
         )
     }
 }
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AddEditNoteGroup(onNavigateUp:()->Unit, onNavigate:()->Unit) {
+fun AddEditNoteGroup(sharedViewModel: SharedViewModel,onNavigateUp:()->Unit, onNavigate:(Long)->Unit) {
     var noteGroupTitle by remember {
         mutableStateOf("")
     }
@@ -78,7 +82,17 @@ fun AddEditNoteGroup(onNavigateUp:()->Unit, onNavigate:()->Unit) {
         FloatingActionButton(
             shape = CircleShape,
             onClick = { /*TODO: navigate to note group items*/
-                onNavigate()
+                val groupTitle = noteGroupTitle.ifEmpty { "Note - ${DateTimeUtil.formatDateTimeTodayForTitle() }"}
+                val groupUuid = Clock.System.now().toEpochMilliseconds()
+                sharedViewModel.addNoteGroup(
+                    NoteGroup(
+                        title = groupTitle,
+                        uuid = groupUuid,
+                        dateCreated = DateTimeUtil.formatDateTimeToday(),
+                        dateUpdated = DateTimeUtil.formatDateTimeToday()
+                    )
+                )
+                onNavigate(groupUuid)
             }) {
             Icon(imageVector = Icons.Default.Check, contentDescription = "Continue")
         }
@@ -120,7 +134,7 @@ fun AddEditNoteGroup(onNavigateUp:()->Unit, onNavigate:()->Unit) {
                         noteGroupTitle = it
                     },
                     placeholder = {
-                        Text(text = "Note group title", color = Color.LightGray)
+                        Text(text = "Note - ${DateTimeUtil.formatDateTimeTodayForTitle() }", color = Color.LightGray)
                     },
                     singleLine = true,
                     colors = TextFieldDefaults.colors(
