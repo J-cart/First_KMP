@@ -61,7 +61,15 @@ data class GroupNotesScreen(private val groupUuid:Long,private val sharedViewMod
      @Composable
      override fun Content() {
          val navigator = LocalNavigator.currentOrThrow
-         NoteGroupItemScreen(sharedViewModel, onNavigateUp = {navigator.pop()}, groupUuid = groupUuid)
+         NoteGroupItemScreen(
+             sharedViewModel,
+             onNavigateUp = { navigator.pop() },
+             groupUuid = groupUuid,
+             onEditNavigate = {
+                 navigator.push(
+                     AddEditNoteGroupScreen(sharedViewModel, it)
+                 )
+             })
 
      }
  }
@@ -70,7 +78,8 @@ data class GroupNotesScreen(private val groupUuid:Long,private val sharedViewMod
 fun NoteGroupItemScreen(
     sharedViewModel:SharedViewModel,
     groupUuid: Long,
-    onNavigateUp:()->Unit
+    onNavigateUp:()->Unit,
+    onEditNavigate:(NoteGroup)->Unit
 ) {
     val lazyListState = rememberLazyListState()
 
@@ -100,7 +109,11 @@ fun NoteGroupItemScreen(
                 )
             },
             actions = {
-                IconButton(onClick = { /*TODO: edit note group*/ }) {
+                IconButton(onClick = {
+                    /*TODO: edit note group*/
+                    onEditNavigate(noteGroup)
+
+                }) {
                     Icon(imageVector = Icons.Default.Edit, contentDescription = "Edit")
                 }
             }
@@ -149,10 +162,9 @@ fun NoteGroupItemScreen(
 
                     }
 
-                    uiGroupState.noteGroup != null ->{
-                        noteGroup = uiGroupState.noteGroup!!
-                    }
-
+                }
+                uiGroupState.noteGroup?.let {
+                    noteGroup = it
                 }
 
             }

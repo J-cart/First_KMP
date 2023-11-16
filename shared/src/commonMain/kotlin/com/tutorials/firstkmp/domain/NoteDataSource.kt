@@ -15,6 +15,8 @@ interface NoteDataSource {
 
     suspend fun deleteNoteById(id: Long)
 
+    suspend fun deleteAllNoteById(id: Long)
+
 
 
     fun getAllNoteGroup():Flow<List<NoteGroup>>
@@ -24,6 +26,8 @@ interface NoteDataSource {
     suspend fun deleteAllNoteGroup()
 
     suspend fun insertNoteGroup(noteGroup: NoteGroup)
+
+    suspend fun updateNoteGroup(noteGroup: NoteGroup)
 
     suspend fun deleteNoteGroupById(id: Long)
 }

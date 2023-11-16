@@ -32,7 +32,6 @@ import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -74,7 +73,7 @@ data class HomeScreen(private val noteDataSource: NoteDataSource,private val sha
     }
 }
 
-@OptIn(ExperimentalResourceApi::class)
+@OptIn(ExperimentalResourceApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun NoteHomeScreen(onViewGroupNavigate:(Long)->Unit,onAddGroupNavigate:()->Unit,sharedViewModel: SharedViewModel) {
 
@@ -105,22 +104,13 @@ fun NoteHomeScreen(onViewGroupNavigate:(Long)->Unit,onAddGroupNavigate:()->Unit,
 
     Scaffold(
         topBar = {
-            GenericAppBar(
-                title = "Notes",
-                icon = {
-                    Icon(
-                        imageVector = Icons.Default.Delete,
-                        contentDescription = "Delete All"
-                    )
-                },
-                onIconClick = {
-                    dialogState = uiState.groupList.isNotEmpty()
-                    deleteDialogText = "Are you sure you want to delete all items?"
-                },
-                iconState = remember {
-                    mutableStateOf(true)
-                }
-            )
+            TopAppBar(
+                title = { Text(text = "Notes") },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface,
+                    actionIconContentColor = MaterialTheme.colorScheme.onSurface
+                ))
         }, floatingActionButton = {
             GenericFab(
                 contentDescription = "Add Group",
@@ -223,31 +213,6 @@ fun NoteGroupList(
     }
 }
 
-
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun GenericAppBar(
-    title: String,
-    icon: @Composable (() -> Unit)?,
-    onIconClick: (() -> Unit)?,
-    iconState: MutableState<Boolean>
-) {
-    TopAppBar(
-        title = { Text(text = title) },
-        colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-            titleContentColor = MaterialTheme.colorScheme.onSurface,
-            actionIconContentColor = MaterialTheme.colorScheme.onSurface
-        ),
-        actions = {
-            IconButton(onClick = { onIconClick?.invoke() }, content = {
-                if (iconState.value) {
-                    icon?.invoke()
-                }
-            })
-        })
-}
 
 
 @Composable

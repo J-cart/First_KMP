@@ -4,6 +4,8 @@ import com.tutorials.firstkmp.domain.Note
 import com.tutorials.firstkmp.domain.NoteDataSource
 import com.tutorials.firstkmp.domain.NoteGroup
 import dev.icerock.moko.mvvm.viewmodel.ViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -63,6 +65,12 @@ class SharedViewModel(private val noteDataSource: NoteDataSource) : ViewModel() 
         }
     }
 
+    fun deleteAllNoteById(id: Long){
+        viewModelScope.launch {
+            noteDataSource.deleteAllNoteById(id)
+        }
+    }
+
 
   fun loadAllNoteGroup() {
         viewModelScope.launch {
@@ -83,9 +91,16 @@ class SharedViewModel(private val noteDataSource: NoteDataSource) : ViewModel() 
         }
     }
 
-    fun deleteNoteGroup(id: Long){
+    fun updateNoteGroup(noteGroup: NoteGroup) {
         viewModelScope.launch {
+            noteDataSource.updateNoteGroup(noteGroup)
+        }
+    }
+
+    fun deleteNoteGroup(id: Long){
+        viewModelScope.launch(Dispatchers.IO) {
             noteDataSource.deleteNoteGroupById(id)
+            deleteAllNoteById(id)
         }
     }
 

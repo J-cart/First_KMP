@@ -51,6 +51,8 @@ kotlin {
                 // Navigator
                 implementation("cafe.adriel.voyager:voyager-navigator:$voyagerVersion")
 
+                implementation("co.touchlab:kermit:2.0.2")//kermit for logging
+
             }
         }
 

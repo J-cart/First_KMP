@@ -54,6 +54,10 @@ class SqlDelightNoteDataSourceImpl(db: NoteDatabase) : NoteDataSource {
         query.deleteNoteById(id)
     }
 
+    override suspend fun deleteAllNoteById(id: Long) {
+        query.deleteAllNoteById(id)
+    }
+
     override fun getAllNotesByGroup(uuid: Long): Flow<List<Note>> {
         val noteFlow = query.getAllNotesByGroupUuid(uuid).asFlow().mapToList()
         return noteFlow.map {
@@ -107,6 +111,16 @@ class SqlDelightNoteDataSourceImpl(db: NoteDatabase) : NoteDataSource {
         val queryNoteGroup = groupQuery.getNoteGroupByUuid(uuid).executeAsOneOrNull()
         return queryNoteGroup?.toNoteGroup()
 
+    }
+
+    override suspend fun updateNoteGroup(noteGroup: NoteGroup) {
+        groupQuery.insertNoteGroup(
+            id = noteGroup.id,
+            uuid = noteGroup.uuid,
+            title = noteGroup.title,
+            dateUpdated = noteGroup.dateUpdated,
+            dateCreated = noteGroup.dateCreated
+        )
     }
 
     //endregion

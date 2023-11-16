@@ -33,35 +33,51 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
+import co.touchlab.kermit.Logger
 import com.tutorials.firstkmp.domain.NoteGroup
 import com.tutorials.firstkmp.domain.time.DateTimeUtil
 import com.tutorials.firstkmp.presentation.SharedViewModel
 import kotlinx.datetime.Clock
 
-data class AddEditNoteGroupScreen(private val sharedViewModel: SharedViewModel) :Screen{
+data class AddEditNoteGroupScreen(private val sharedViewModel: SharedViewModel,private val noteGroup: NoteGroup? = null) :Screen{
     @Composable
     override fun Content() {
         val navigator = LocalNavigator.currentOrThrow
         AddEditNoteGroup(onNavigateUp = {
             navigator.pop()
         }, onNavigate = {
-            navigator.replace(GroupNotesScreen(groupUuid = it,sharedViewModel))
-        }, sharedViewModel = sharedViewModel
+            navigator.replace(GroupNotesScreen(groupUuid = it, sharedViewModel))
+        }, sharedViewModel = sharedViewModel,
+            noteGroup = noteGroup, onEditNavigate = {
+                navigator.pop()
+            }, onDeleteNavigate = {
+                /*
+               --also works--
+                navigator.popUntil {
+                    it is HomeScreen
+                }*/
+                navigator.popUntilRoot()
+            }
         )
     }
 }
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AddEditNoteGroup(sharedViewModel: SharedViewModel,onNavigateUp:()->Unit, onNavigate:(Long)->Unit) {
+fun AddEditNoteGroup(noteGroup: NoteGroup? = null,sharedViewModel: SharedViewModel,onNavigateUp:()->Unit, onNavigate:(Long)->Unit, onEditNavigate:()->Unit, onDeleteNavigate:()->Unit) {
     var noteGroupTitle by remember {
         mutableStateOf("")
     }
-    var someText by remember { mutableStateOf(TextFieldValue("")) }
+
+
+    LaunchedEffect(Unit){
+        noteGroup?.let {
+            noteGroupTitle = it.title
+        }
+    }
 
     Scaffold(topBar = {
         TopAppBar(
@@ -73,26 +89,35 @@ fun AddEditNoteGroup(sharedViewModel: SharedViewModel,onNavigateUp:()->Unit, onN
                 )
             },
             actions = {
-                IconButton(onClick = { /*TODO: delete note group*/ }) {
-                    Icon(imageVector = Icons.Default.Delete, contentDescription = "Delete")
+
+                noteGroup?.id?.let {
+                    IconButton(onClick = {
+                        /*TODO: delete note group*/
+                        sharedViewModel.deleteNoteGroup(it)
+                        onDeleteNavigate()
+                    }) {
+                        Icon(imageVector = Icons.Default.Delete, contentDescription = "Delete")
+                    }
                 }
+
             }
         )
     }, floatingActionButton = {
         FloatingActionButton(
             shape = CircleShape,
             onClick = { /*TODO: navigate to note group items*/
-                val groupTitle = noteGroupTitle.ifEmpty { "Note - ${DateTimeUtil.formatDateTimeTodayForTitle() }"}
-                val groupUuid = Clock.System.now().toEpochMilliseconds()
-                sharedViewModel.addNoteGroup(
-                    NoteGroup(
-                        title = groupTitle,
-                        uuid = groupUuid,
-                        dateCreated = DateTimeUtil.formatDateTimeToday(),
-                        dateUpdated = DateTimeUtil.formatDateTimeToday()
+                noteGroup?.let {
+                    sharedViewModel.updateNoteGroup(
+                        it.copy(
+                            title = noteGroupTitle,
+                            dateUpdated = DateTimeUtil.formatDateTimeToday()
+                        )
                     )
-                )
-                onNavigate(groupUuid)
+                    onEditNavigate()
+                }?: addGroup(noteGroupTitle, sharedViewModel){
+                    onNavigate(it)
+                }
+
             }) {
             Icon(imageVector = Icons.Default.Check, contentDescription = "Continue")
         }
@@ -156,4 +181,18 @@ fun AddEditNoteGroup(sharedViewModel: SharedViewModel,onNavigateUp:()->Unit, onN
             }
         }
     }
+}
+
+fun addGroup(noteGroupTitle:String,sharedViewModel: SharedViewModel,onNavigate: (Long) -> Unit){
+    val groupTitle = noteGroupTitle.ifEmpty { "Note - ${DateTimeUtil.formatDateTimeTodayForTitle() }"}
+    val groupUuid = Clock.System.now().toEpochMilliseconds()
+    sharedViewModel.addNoteGroup(
+        NoteGroup(
+            title = groupTitle,
+            uuid = groupUuid,
+            dateCreated = DateTimeUtil.formatDateTimeToday(),
+            dateUpdated = DateTimeUtil.formatDateTimeToday()
+        )
+    )
+    onNavigate(groupUuid)
 }
