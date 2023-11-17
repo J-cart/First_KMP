@@ -46,9 +46,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import cafe.adriel.voyager.core.screen.Screen
-import cafe.adriel.voyager.navigator.LocalNavigator
-import cafe.adriel.voyager.navigator.currentOrThrow
 import com.tutorials.firstkmp.domain.Note
 import com.tutorials.firstkmp.domain.NoteGroup
 import com.tutorials.firstkmp.presentation.SharedViewModel
@@ -56,30 +53,13 @@ import kotlinx.datetime.Clock
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
 
-data class GroupNotesScreen(private val groupUuid:Long,private val sharedViewModel: SharedViewModel):Screen{
-
-     @Composable
-     override fun Content() {
-         val navigator = LocalNavigator.currentOrThrow
-         NoteGroupItemScreen(
-             sharedViewModel,
-             onNavigateUp = { navigator.pop() },
-             groupUuid = groupUuid,
-             onEditNavigate = {
-                 navigator.push(
-                     AddEditNoteGroupScreen(sharedViewModel, it)
-                 )
-             })
-
-     }
- }
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalResourceApi::class)
 @Composable
 fun NoteGroupItemScreen(
-    sharedViewModel:SharedViewModel,
+    sharedViewModel: SharedViewModel,
     groupUuid: Long,
-    onNavigateUp:()->Unit,
-    onEditNavigate:(NoteGroup)->Unit
+    onNavigateUp: () -> Unit,
+    onEditNavigate: (NoteGroup) -> Unit
 ) {
     val lazyListState = rememberLazyListState()
 
@@ -94,7 +74,7 @@ fun NoteGroupItemScreen(
     val uiState by sharedViewModel.allNotesState.collectAsState()
     val uiGroupState by sharedViewModel.noteGroupState.collectAsState()
 
-    LaunchedEffect(Unit){
+    LaunchedEffect(Unit) {
         sharedViewModel.getNoteGroupByUuid(groupUuid)
         sharedViewModel.loadAllNotesByGroup(groupUuid)
     }
@@ -103,7 +83,8 @@ fun NoteGroupItemScreen(
         TopAppBar(
             title = { Text(text = noteGroup.title, modifier = Modifier.padding(start = 10.dp)) },
             navigationIcon = {
-                Icon(modifier = Modifier.clickable { onNavigateUp() },
+                Icon(
+                    modifier = Modifier.clickable { onNavigateUp() },
                     imageVector = Icons.Default.KeyboardArrowLeft,
                     contentDescription = "Back"
                 )
@@ -125,7 +106,10 @@ fun NoteGroupItemScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            Box(modifier = Modifier.fillMaxWidth().height(0.8.dp).background(color = Color.LightGray).padding(top = 10.dp))
+            Box(
+                modifier = Modifier.fillMaxWidth().height(0.8.dp)
+                    .background(color = Color.LightGray).padding(top = 10.dp)
+            )
 
             Box(modifier = Modifier.weight(1f)) {
 
@@ -171,7 +155,10 @@ fun NoteGroupItemScreen(
 
 
             Column {
-                Box(modifier = Modifier.fillMaxWidth().height(0.8.dp).background(color = Color.LightGray))
+                Box(
+                    modifier = Modifier.fillMaxWidth().height(0.8.dp)
+                        .background(color = Color.LightGray)
+                )
                 Box {
                     Row(
                         modifier = Modifier
@@ -213,12 +200,12 @@ fun NoteGroupItemScreen(
                                 .align(Alignment.Bottom),
                             shape = CircleShape, onClick = {
                                 /*TODO: save note*/
-                                if (noteText.isNotEmpty()){
+                                if (noteText.isNotEmpty()) {
                                     val note = Note(
                                         id = Clock.System.now().toEpochMilliseconds(),
                                         title = noteText,
-                                        groupUuid =groupUuid,
-                                        groupId =noteGroup.id!!,
+                                        groupUuid = groupUuid,
+                                        groupId = noteGroup.id!!,
                                         dateCreated = Clock.System.now().toEpochMilliseconds()
                                     )
                                     sharedViewModel.addNote(note)
@@ -237,7 +224,7 @@ fun NoteGroupItemScreen(
 }
 
 @Composable
-fun NoteItem(text:String) {
+fun NoteItem(text: String) {
     Surface(
         modifier = Modifier.padding(
             top = 5.dp,
@@ -276,7 +263,11 @@ fun NoteItemList(
     onClick: (noteItem: Note) -> Unit,
     onLongClick: (noteItem: Note) -> Unit
 ) {
-    LazyColumn(modifier = Modifier.fillMaxWidth(), state = state, horizontalAlignment = Alignment.End) {
+    LazyColumn(
+        modifier = Modifier.fillMaxWidth(),
+        state = state,
+        horizontalAlignment = Alignment.End
+    ) {
         itemsIndexed(noteItems) { index, item ->
             NoteItem(item.title)
         }

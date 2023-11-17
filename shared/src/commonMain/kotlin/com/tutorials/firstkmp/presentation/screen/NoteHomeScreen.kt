@@ -49,33 +49,19 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import cafe.adriel.voyager.core.screen.Screen
-import cafe.adriel.voyager.navigator.LocalNavigator
-import cafe.adriel.voyager.navigator.currentOrThrow
-import com.tutorials.firstkmp.domain.NoteDataSource
 import com.tutorials.firstkmp.domain.NoteGroup
 import com.tutorials.firstkmp.presentation.SharedViewModel
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
 
 
-data class HomeScreen(private val noteDataSource: NoteDataSource,private val sharedViewModel: SharedViewModel):Screen{
-
-
-    @Composable
-    override fun Content() {
-        val navigator = LocalNavigator.currentOrThrow
-        NoteHomeScreen(onViewGroupNavigate = {
-            navigator.push(GroupNotesScreen(it, sharedViewModel))
-        }, onAddGroupNavigate = {
-            navigator.push(AddEditNoteGroupScreen(sharedViewModel))
-        }, sharedViewModel)
-    }
-}
-
 @OptIn(ExperimentalResourceApi::class, ExperimentalMaterial3Api::class)
 @Composable
-fun NoteHomeScreen(onViewGroupNavigate:(Long)->Unit,onAddGroupNavigate:()->Unit,sharedViewModel: SharedViewModel) {
+fun NoteHomeScreen(
+    onViewGroupNavigate: (Long) -> Unit,
+    onAddGroupNavigate: () -> Unit,
+    sharedViewModel: SharedViewModel
+) {
 
 
     val lazyListState = rememberLazyListState()

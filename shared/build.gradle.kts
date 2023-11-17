@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.androidLibrary)
     id("org.jetbrains.compose")
     id("com.squareup.sqldelight")
+    id ("kotlin-parcelize")
 }
 
 kotlin {
@@ -43,16 +44,16 @@ kotlin {
                 api("dev.icerock.moko:mvvm-flow-compose:0.16.1") // api mvvm-flow, binding extensions for Compose Multiplatform
                 api("dev.icerock.moko:mvvm-flow:0.16.1") // api mvvm-core, CFlow for native and binding extensions
 
-
-                val voyagerVersion = "1.0.0-rc10"
-
-                // Multiplatform
-
-                // Navigator
-                implementation("cafe.adriel.voyager:voyager-navigator:$voyagerVersion")
-
                 implementation("co.touchlab:kermit:2.0.2")//kermit for logging
 
+                //Decompose for multiplatform
+                implementation("com.arkivanov.decompose:decompose:2.1.4-compose-experimental")
+                implementation("com.arkivanov.decompose:extensions-compose-jetbrains:2.1.4-compose-experimental")
+
+                //Added kotlinx coroutine dependency because for some reason, build error occurs due to
+                // failing to resolve  "kotlinx.coroutines.IO" (used in SharedViewModel.kt) after removing the dependency for Voyager Navigation
+                // adding Voyager dependency also resolves this error but, voyager dependency isn't needed anymore.
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
             }
         }
 

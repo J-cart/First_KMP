@@ -34,46 +34,27 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import cafe.adriel.voyager.core.screen.Screen
-import cafe.adriel.voyager.navigator.LocalNavigator
-import cafe.adriel.voyager.navigator.currentOrThrow
-import co.touchlab.kermit.Logger
 import com.tutorials.firstkmp.domain.NoteGroup
 import com.tutorials.firstkmp.domain.time.DateTimeUtil
 import com.tutorials.firstkmp.presentation.SharedViewModel
 import kotlinx.datetime.Clock
 
-data class AddEditNoteGroupScreen(private val sharedViewModel: SharedViewModel,private val noteGroup: NoteGroup? = null) :Screen{
-    @Composable
-    override fun Content() {
-        val navigator = LocalNavigator.currentOrThrow
-        AddEditNoteGroup(onNavigateUp = {
-            navigator.pop()
-        }, onNavigate = {
-            navigator.replace(GroupNotesScreen(groupUuid = it, sharedViewModel))
-        }, sharedViewModel = sharedViewModel,
-            noteGroup = noteGroup, onEditNavigate = {
-                navigator.pop()
-            }, onDeleteNavigate = {
-                /*
-               --also works--
-                navigator.popUntil {
-                    it is HomeScreen
-                }*/
-                navigator.popUntilRoot()
-            }
-        )
-    }
-}
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AddEditNoteGroup(noteGroup: NoteGroup? = null,sharedViewModel: SharedViewModel,onNavigateUp:()->Unit, onNavigate:(Long)->Unit, onEditNavigate:()->Unit, onDeleteNavigate:()->Unit) {
+fun AddEditNoteGroup(
+    noteGroup: NoteGroup? = null,
+    sharedViewModel: SharedViewModel,
+    onNavigateUp: () -> Unit,
+    onNavigate: (Long) -> Unit,
+    onEditNavigate: () -> Unit,
+    onDeleteNavigate: () -> Unit
+) {
     var noteGroupTitle by remember {
         mutableStateOf("")
     }
 
 
-    LaunchedEffect(Unit){
+    LaunchedEffect(Unit) {
         noteGroup?.let {
             noteGroupTitle = it.title
         }
@@ -83,7 +64,8 @@ fun AddEditNoteGroup(noteGroup: NoteGroup? = null,sharedViewModel: SharedViewMod
         TopAppBar(
             title = { Text(text = "New note group", modifier = Modifier.padding(start = 10.dp)) },
             navigationIcon = {
-                Icon(modifier = Modifier.clickable { onNavigateUp() },
+                Icon(
+                    modifier = Modifier.clickable { onNavigateUp() },
                     imageVector = Icons.Default.KeyboardArrowLeft,
                     contentDescription = "Back"
                 )
@@ -114,7 +96,7 @@ fun AddEditNoteGroup(noteGroup: NoteGroup? = null,sharedViewModel: SharedViewMod
                         )
                     )
                     onEditNavigate()
-                }?: addGroup(noteGroupTitle, sharedViewModel){
+                } ?: addGroup(noteGroupTitle, sharedViewModel) {
                     onNavigate(it)
                 }
 
@@ -159,7 +141,10 @@ fun AddEditNoteGroup(noteGroup: NoteGroup? = null,sharedViewModel: SharedViewMod
                         noteGroupTitle = it
                     },
                     placeholder = {
-                        Text(text = "Note - ${DateTimeUtil.formatDateTimeTodayForTitle() }", color = Color.LightGray)
+                        Text(
+                            text = "Note - ${DateTimeUtil.formatDateTimeTodayForTitle()}",
+                            color = Color.LightGray
+                        )
                     },
                     singleLine = true,
                     colors = TextFieldDefaults.colors(
@@ -183,8 +168,9 @@ fun AddEditNoteGroup(noteGroup: NoteGroup? = null,sharedViewModel: SharedViewMod
     }
 }
 
-fun addGroup(noteGroupTitle:String,sharedViewModel: SharedViewModel,onNavigate: (Long) -> Unit){
-    val groupTitle = noteGroupTitle.ifEmpty { "Note - ${DateTimeUtil.formatDateTimeTodayForTitle() }"}
+fun addGroup(noteGroupTitle: String, sharedViewModel: SharedViewModel, onNavigate: (Long) -> Unit) {
+    val groupTitle =
+        noteGroupTitle.ifEmpty { "Note - ${DateTimeUtil.formatDateTimeTodayForTitle()}" }
     val groupUuid = Clock.System.now().toEpochMilliseconds()
     sharedViewModel.addNoteGroup(
         NoteGroup(
