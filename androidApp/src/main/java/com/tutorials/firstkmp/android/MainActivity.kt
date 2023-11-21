@@ -15,22 +15,25 @@ import com.tutorials.firstkmp.data.SqlDelightNoteDataSourceImpl
 import com.tutorials.firstkmp.database.NoteDatabase
 import com.tutorials.firstkmp.presentation.screen.MainView
 import com.tutorials.firstkmp.presentation.ui.theme.NoteTheme
+import moe.tlaster.precompose.PreComposeApp
 
 class MainActivity : ComponentActivity() {
     private val db = NoteDatabase(driver = DatabaseDriverFactory(this).createDriver())
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            NoteTheme {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
+            PreComposeApp {
+                NoteTheme {
+                    Surface(
+                        modifier = Modifier.fillMaxSize(),
+                        color = MaterialTheme.colorScheme.background
+                    ) {
 
-                    MainView(
-                        SqlDelightNoteDataSourceImpl(db)
-                    )
+                        MainView(
+                            SqlDelightNoteDataSourceImpl(db)
+                        )
 
+                    }
                 }
             }
         }

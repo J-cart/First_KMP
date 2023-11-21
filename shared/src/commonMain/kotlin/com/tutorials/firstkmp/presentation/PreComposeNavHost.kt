@@ -1,19 +1,20 @@
 package com.tutorials.firstkmp.presentation
 
 import androidx.compose.runtime.Composable
+import com.tutorials.firstkmp.SharedAppView
 import com.tutorials.firstkmp.presentation.screen.AddEditNoteGroup
 import com.tutorials.firstkmp.presentation.screen.NoteGroupItemScreen
 import com.tutorials.firstkmp.presentation.screen.NoteHomeScreen
 import moe.tlaster.precompose.navigation.NavHost
 import moe.tlaster.precompose.navigation.NavOptions
+import moe.tlaster.precompose.navigation.Navigator
 import moe.tlaster.precompose.navigation.PopUpTo
 import moe.tlaster.precompose.navigation.path
-import moe.tlaster.precompose.navigation.rememberNavigator
 import moe.tlaster.precompose.navigation.transition.NavTransition
 
 @Composable
-fun PreComposeNavHost(sharedViewModel: SharedViewModel) {
-    val navigator = rememberNavigator()
+fun PreComposeNavHost(navigator: Navigator,sharedViewModel: SharedViewModel) {
+
     NavHost(
         navigator = navigator,
         navTransition = NavTransition(),
@@ -87,12 +88,17 @@ fun PreComposeNavHost(sharedViewModel: SharedViewModel) {
                 }
             )
         }
+
+        scene(NoteNavigationRoute.SharedHomeScreen.route){
+            SharedAppView()
+        }
     }
 }
 
 
 sealed class NoteNavigationRoute(val route: String) {
     object NoteHomeScreen : NoteNavigationRoute("NoteHomeScreen")
+    object SharedHomeScreen : NoteNavigationRoute("SharedHomeScreen")
 
     object AddEditNoteGroupScreen : NoteNavigationRoute("AddEditNoteGroup/{group_uuid}") {
         fun navigateWithArgs(uuid: Long): String {
