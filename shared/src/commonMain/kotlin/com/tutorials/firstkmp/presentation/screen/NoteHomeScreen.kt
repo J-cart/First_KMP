@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -108,7 +107,6 @@ fun NoteHomeScreen(
                 ))
         }, floatingActionButton = {
             GenericFab(
-                modifier = Modifier.offset(x = -10.dp,  y = -70.dp),
                 contentDescription = "Add Group",
                 action = {
                     // TODO: Navigate to add note screen
@@ -122,7 +120,6 @@ fun NoteHomeScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues = paddingValues)
-                .offset(x = (-10).dp,  y = (-70).dp)
         ) {
 
             Column(modifier = Modifier.weight(1f)) {
@@ -214,13 +211,12 @@ fun NoteGroupList(
 
 @Composable
 fun GenericFab(
-    modifier: Modifier,
     contentDescription: String,
     action: () -> Unit,
     icon: ImageVector
 ) {
 
-    return FloatingActionButton(modifier= modifier,shape = CircleShape,onClick = { action() }) {
+    return FloatingActionButton(shape = CircleShape,onClick = { action() }) {
         Icon(
             imageVector = icon,
             contentDescription = contentDescription

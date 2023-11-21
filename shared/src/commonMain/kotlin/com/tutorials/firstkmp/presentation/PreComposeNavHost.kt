@@ -1,7 +1,6 @@
 package com.tutorials.firstkmp.presentation
 
 import androidx.compose.runtime.Composable
-import com.tutorials.firstkmp.SharedAppView
 import com.tutorials.firstkmp.presentation.screen.AddEditNoteGroup
 import com.tutorials.firstkmp.presentation.screen.NoteGroupItemScreen
 import com.tutorials.firstkmp.presentation.screen.NoteHomeScreen
@@ -88,17 +87,12 @@ fun PreComposeNavHost(navigator: Navigator,sharedViewModel: SharedViewModel) {
                 }
             )
         }
-
-        scene(NoteNavigationRoute.SharedHomeScreen.route){
-            SharedAppView()
-        }
     }
 }
 
 
 sealed class NoteNavigationRoute(val route: String) {
     object NoteHomeScreen : NoteNavigationRoute("NoteHomeScreen")
-    object SharedHomeScreen : NoteNavigationRoute("SharedHomeScreen")
 
     object AddEditNoteGroupScreen : NoteNavigationRoute("AddEditNoteGroup/{group_uuid}") {
         fun navigateWithArgs(uuid: Long): String {

@@ -18,9 +18,7 @@ import org.jetbrains.compose.resources.painterResource
 
 @OptIn(ExperimentalResourceApi::class)
 @Composable
-fun SharedAppView(
-//    noteDataSource: NoteDataSource
-) {
+fun SharedAppView() {
 
     var greetingText by remember { mutableStateOf("Hello world") }
     var showImage by remember { mutableStateOf(false) }
