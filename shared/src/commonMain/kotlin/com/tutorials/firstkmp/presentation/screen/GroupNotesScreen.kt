@@ -200,10 +200,10 @@ fun NoteGroupItemScreen(
                                 .align(Alignment.Bottom),
                             shape = CircleShape, onClick = {
                                 /*TODO: save note*/
-                                if (noteText.isNotEmpty()) {
+                                if (noteText.trim().isNotEmpty()) {
                                     val note = Note(
                                         id = Clock.System.now().toEpochMilliseconds(),
-                                        title = noteText,
+                                        title = noteText.trim(),
                                         groupUuid = groupUuid,
                                         groupId = noteGroup.id!!,
                                         dateCreated = Clock.System.now().toEpochMilliseconds()

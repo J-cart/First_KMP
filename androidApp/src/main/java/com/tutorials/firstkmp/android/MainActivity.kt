@@ -10,11 +10,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import com.arkivanov.decompose.defaultComponentContext
 import com.tutorials.firstkmp.core.DatabaseDriverFactory
 import com.tutorials.firstkmp.data.SqlDelightNoteDataSourceImpl
 import com.tutorials.firstkmp.database.NoteDatabase
-import com.tutorials.firstkmp.presentation.ProvideComponentContext
 import com.tutorials.firstkmp.presentation.screen.MainView
 import com.tutorials.firstkmp.presentation.ui.theme.NoteTheme
 
@@ -23,17 +21,16 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            val rootComponentContext = defaultComponentContext()
             NoteTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    ProvideComponentContext(componentContext = rootComponentContext) {
-                        MainView(
-                            SqlDelightNoteDataSourceImpl(db)
-                        )
-                    }
+
+                    MainView(
+                        SqlDelightNoteDataSourceImpl(db)
+                    )
+
                 }
             }
         }

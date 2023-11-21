@@ -3,7 +3,7 @@ plugins {
     alias(libs.plugins.androidLibrary)
     id("org.jetbrains.compose")
     id("com.squareup.sqldelight")
-    id ("kotlin-parcelize")
+//    id ("kotlin-parcelize")
 }
 
 kotlin {
@@ -46,14 +46,14 @@ kotlin {
 
                 implementation("co.touchlab:kermit:2.0.2")//kermit for logging
 
-                //Decompose for multiplatform
-                implementation("com.arkivanov.decompose:decompose:2.1.4-compose-experimental")
-                implementation("com.arkivanov.decompose:extensions-compose-jetbrains:2.1.4-compose-experimental")
-
                 //Added kotlinx coroutine dependency because for some reason, build error occurs due to
                 // failing to resolve  "kotlinx.coroutines.IO" (used in SharedViewModel.kt) after removing the dependency for Voyager Navigation
                 // adding Voyager dependency also resolves this error but, voyager dependency isn't needed anymore.
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+
+                //precompose navigation
+                val precompose_version = "1.5.7"
+                api("moe.tlaster:precompose:$precompose_version")
             }
         }
 

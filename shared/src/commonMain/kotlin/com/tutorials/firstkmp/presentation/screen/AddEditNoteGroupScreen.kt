@@ -29,7 +29,13 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -42,7 +48,7 @@ import kotlinx.datetime.Clock
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddEditNoteGroup(
-    noteGroup: NoteGroup? = null,
+    noteGroupUuid: Long? = null,
     sharedViewModel: SharedViewModel,
     onNavigateUp: () -> Unit,
     onNavigate: (Long) -> Unit,
@@ -53,16 +59,30 @@ fun AddEditNoteGroup(
         mutableStateOf("")
     }
 
+    var appBarTitle by remember { mutableStateOf("New note group") }
+
+    var noteGroup by remember { mutableStateOf(NoteGroup()) }
+
+    val noteGroupUiState by sharedViewModel.noteGroupState.collectAsState()
 
     LaunchedEffect(Unit) {
-        noteGroup?.let {
-            noteGroupTitle = it.title
+        noteGroupUuid?.let {
+            sharedViewModel.getNoteGroupByUuid(it)
         }
     }
 
+    noteGroupUuid?.let {
+        noteGroupUiState.noteGroup?.let { nGroup ->
+            noteGroup = nGroup
+            noteGroupTitle = nGroup.title
+            appBarTitle = "Edit note group"
+        }
+    }
+
+
     Scaffold(topBar = {
         TopAppBar(
-            title = { Text(text = "New note group", modifier = Modifier.padding(start = 10.dp)) },
+            title = { Text(text = appBarTitle, modifier = Modifier.padding(start = 10.dp)) },
             navigationIcon = {
                 Icon(
                     modifier = Modifier.clickable { onNavigateUp() },
@@ -72,7 +92,7 @@ fun AddEditNoteGroup(
             },
             actions = {
 
-                noteGroup?.id?.let {
+                noteGroup.id?.let {
                     IconButton(onClick = {
                         /*TODO: delete note group*/
                         sharedViewModel.deleteNoteGroup(it)
@@ -88,9 +108,9 @@ fun AddEditNoteGroup(
         FloatingActionButton(
             shape = CircleShape,
             onClick = { /*TODO: navigate to note group items*/
-                noteGroup?.let {
+                noteGroupUuid?.let {
                     sharedViewModel.updateNoteGroup(
-                        it.copy(
+                        noteGroup.copy(
                             title = noteGroupTitle,
                             dateUpdated = DateTimeUtil.formatDateTimeToday()
                         )
