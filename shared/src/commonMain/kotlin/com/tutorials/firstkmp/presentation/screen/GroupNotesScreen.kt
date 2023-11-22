@@ -20,10 +20,14 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Send
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
@@ -63,12 +67,12 @@ fun NoteGroupItemScreen(
 ) {
     val lazyListState = rememberLazyListState()
 
-    var noteText by remember {
-        mutableStateOf("")
-    }
-
     var noteGroup by remember {
         mutableStateOf(NoteGroup())
+    }
+
+    var selectedNote by remember {
+        mutableStateOf<List<Note>>(emptyList())
     }
 
     val uiState by sharedViewModel.allNotesState.collectAsState()
@@ -159,64 +163,19 @@ fun NoteGroupItemScreen(
                     modifier = Modifier.fillMaxWidth().height(0.8.dp)
                         .background(color = Color.LightGray)
                 )
-                Box {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .align(Alignment.BottomCenter)
-                            .padding(bottom = 12.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        TextField(
-                            modifier = Modifier
-                                .fillMaxWidth(0.8f)
-                                .padding(end = 8.dp),
-                            value = noteText,
-                            placeholder = {
-                                Text(text = "What's on your mind?", color = Color.LightGray)
-                            },
-                            onValueChange = {
-                                noteText = it
-                            },
-                            colors = TextFieldDefaults.colors(
-                                focusedIndicatorColor = Color.Transparent,
-                                unfocusedIndicatorColor = Color.Transparent,
-                                focusedContainerColor = Color.Transparent,
-                                unfocusedContainerColor = Color.Transparent,
-                            )
-                        )
-                        Icon(
-                            modifier = Modifier
-                                .clickable {
-                                    // TODO: select attachment
-                                }
-                                .padding(end = 8.dp),
-                            imageVector = Icons.Default.MoreVert, contentDescription = "Attachment"
-                        )
-                        FilledIconButton(
-                            modifier = Modifier
-                                .padding(end = 8.dp)
-                                .align(Alignment.Bottom),
-                            shape = CircleShape, onClick = {
-                                /*TODO: save note*/
-                                if (noteText.trim().isNotEmpty()) {
-                                    val note = Note(
-                                        id = Clock.System.now().toEpochMilliseconds(),
-                                        title = noteText.trim(),
-                                        groupUuid = groupUuid,
-                                        groupId = noteGroup.id!!,
-                                        dateCreated = Clock.System.now().toEpochMilliseconds()
-                                    )
-                                    sharedViewModel.addNote(note)
-                                    noteText = ""
-                                }
-
-                            }) {
-                            Icon(imageVector = Icons.Default.Send, contentDescription = "Add note")
-                        }
-
-                    }
+                if (selectedNote.isEmpty()) {
+                   AddNoteView(sharedViewModel, groupUuid, noteGroup)
+                }else{
+                    NoteEditVew(
+                        selectedNote.size,
+                        onClearSelection = {
+                            selectedNote = emptyList()
+                        },
+                        onEditSelection = {},
+                        onShareSelection = {},
+                        onCopySelection = {},
+                        onDeleteSelection = {}
+                    )
                 }
             }
         }
@@ -270,6 +229,119 @@ fun NoteItemList(
     ) {
         itemsIndexed(noteItems) { index, item ->
             NoteItem(item.title)
+        }
+    }
+}
+
+@Composable
+fun AddNoteView(sharedViewModel: SharedViewModel,groupUuid: Long,noteGroup: NoteGroup) {
+    var noteText by remember {
+        mutableStateOf("")
+    }
+
+
+    Box {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            TextField(
+                modifier = Modifier
+                    .fillMaxWidth(0.8f)
+                    .padding(end = 8.dp),
+                value = noteText,
+                placeholder = {
+                    Text(text = "What's on your mind?", color = Color.LightGray)
+                },
+                onValueChange = {
+                    noteText = it
+                },
+                colors = TextFieldDefaults.colors(
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent,
+                    focusedContainerColor = Color.Transparent,
+                    unfocusedContainerColor = Color.Transparent,
+                )
+            )
+            Icon(
+                modifier = Modifier
+                    .clickable {
+                        // TODO: select attachment
+                    }
+                    .padding(end = 8.dp),
+                imageVector = Icons.Default.MoreVert,
+                contentDescription = "Attachment"
+            )
+            FilledIconButton(
+                modifier = Modifier
+                    .padding(end = 8.dp)
+                    .align(Alignment.Bottom),
+                shape = CircleShape, onClick = {
+                    /*TODO: save note*/
+                    if (noteText.trim().isNotEmpty()) {
+                        val note = Note(
+                            id = Clock.System.now().toEpochMilliseconds(),
+                            title = noteText.trim(),
+                            groupUuid = groupUuid,
+                            groupId = noteGroup.id!!,
+                            dateCreated = Clock.System.now().toEpochMilliseconds()
+                        )
+                        sharedViewModel.addNote(note)
+                        noteText = ""
+                    }
+
+                }) {
+                Icon(
+                    imageVector = Icons.Default.Send,
+                    contentDescription = "Add note"
+                )
+            }
+
+        }
+    }
+}
+
+@Composable
+fun NoteEditVew(
+    selectionCount:Int,
+    onClearSelection:()->Unit,
+    onEditSelection:()->Unit,
+    onShareSelection:()->Unit,
+    onCopySelection:()->Unit,
+    onDeleteSelection:()->Unit,
+) {
+
+    Surface(modifier = Modifier.fillMaxWidth()) {
+        Box {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                IconButton(onClick = { onClearSelection() }) {
+                    Icon(imageVector = Icons.Default.Clear , contentDescription = "Close")
+                }
+
+                Text(text = "$selectionCount")
+            }
+
+            Row (modifier = Modifier.align(Alignment.CenterEnd),verticalAlignment = Alignment.CenterVertically){
+                IconButton( onClick = { onEditSelection() }) {
+                    Icon(imageVector = Icons.Default.Edit , contentDescription = "Edit")
+                }
+                IconButton(onClick = { onShareSelection() }) {
+                    Icon(imageVector = Icons.Default.Share , contentDescription = "Share")
+                }
+                IconButton(onClick = { onCopySelection() }) {
+                    Icon(imageVector = Icons.Default.Warning , contentDescription = "Copy")
+                }
+                IconButton(onClick = {onDeleteSelection() }) {
+                    Icon(imageVector = Icons.Default.Delete , contentDescription = "Delete")
+                }
+            }
+
+
+
         }
     }
 }
