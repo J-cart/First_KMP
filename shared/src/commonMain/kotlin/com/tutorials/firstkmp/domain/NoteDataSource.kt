@@ -17,6 +17,8 @@ interface NoteDataSource {
 
     suspend fun deleteAllNoteById(id: Long)
 
+    suspend fun unSelectNotes(setStateValue: Long, queryStateValue: Long)
+
 
 
     fun getAllNoteGroup():Flow<List<NoteGroup>>

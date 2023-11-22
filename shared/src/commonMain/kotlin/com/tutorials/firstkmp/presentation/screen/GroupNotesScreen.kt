@@ -72,7 +72,7 @@ fun NoteGroupItemScreen(
     }
 
     var selectedNote by remember {
-        mutableStateOf<List<Note>>(emptyList())
+        mutableStateOf<Set<Long>>(emptySet())
     }
 
     val uiState by sharedViewModel.allNotesState.collectAsState()
@@ -141,11 +141,19 @@ fun NoteGroupItemScreen(
                         NoteItemList(
                             noteItems = uiState.noteList,
                             state = lazyListState,
-                            onClick = {
-                                // TODO: Navigate to view note screen
+                            onClick = { note ->
+                                // TODO: toggle selection
+                                toggleSelection(
+                                    sharedViewModel = sharedViewModel,
+                                    selectedNote,
+                                    noteItem = note,
+                                    onToggle = {
+                                        selectedNote =it
+                                    }
+                                )
                             },
                             onLongClick = {
-                                // TODO: delete note
+                                // TODO: toggle selection
                             })
 
                     }
@@ -169,7 +177,8 @@ fun NoteGroupItemScreen(
                     NoteEditVew(
                         selectedNote.size,
                         onClearSelection = {
-                            selectedNote = emptyList()
+                            sharedViewModel.clearSelection()
+                            selectedNote = emptySet()
                         },
                         onEditSelection = {},
                         onShareSelection = {},
@@ -183,27 +192,30 @@ fun NoteGroupItemScreen(
 }
 
 @Composable
-fun NoteItem(text: String) {
-    Surface(
-        modifier = Modifier.padding(
-            top = 5.dp,
-            bottom = 5.dp,
-            end = 10.dp,
-            start = 10.dp
-        )
-    ) {
+fun NoteItem(note: Note,onClick: (noteItem: Note) -> Unit) {
+    Surface {
         Box(
-            modifier = Modifier
+            modifier = Modifier.fillMaxWidth().background(
+                color = toggleBackGroundColor(note)
+            ).padding(
+                top = (2.5).dp,
+                bottom = (2.5).dp,
+                end = 10.dp,
+                start = 10.dp
+            ), contentAlignment = Alignment.CenterEnd
+
+        ) {
+            Column( modifier = Modifier
                 .wrapContentSize()
                 .background(
                     color = Color.Gray, shape = RoundedCornerShape(
                         CornerSize(8.dp)
                     )
-                )
-                .padding(8.dp)
-        ) {
-            Column {
-                Text(text = text)
+                ).clickable  {
+                    onClick(note)
+                }
+                .padding(8.dp)) {
+                Text(text = note.text)
                 Text(
                     modifier = Modifier.align(Alignment.End),
                     text = "7:34pm",
@@ -228,7 +240,10 @@ fun NoteItemList(
         horizontalAlignment = Alignment.End
     ) {
         itemsIndexed(noteItems) { index, item ->
-            NoteItem(item.title)
+            NoteItem(item, onClick = {
+                onClick(it)
+
+            })
         }
     }
 }
@@ -285,7 +300,7 @@ fun AddNoteView(sharedViewModel: SharedViewModel,groupUuid: Long,noteGroup: Note
                     if (noteText.trim().isNotEmpty()) {
                         val note = Note(
                             id = Clock.System.now().toEpochMilliseconds(),
-                            title = noteText.trim(),
+                            text = noteText.trim(),
                             groupUuid = groupUuid,
                             groupId = noteGroup.id!!,
                             dateCreated = Clock.System.now().toEpochMilliseconds()
@@ -326,15 +341,20 @@ fun NoteEditVew(
             }
 
             Row (modifier = Modifier.align(Alignment.CenterEnd),verticalAlignment = Alignment.CenterVertically){
-                IconButton( onClick = { onEditSelection() }) {
-                    Icon(imageVector = Icons.Default.Edit , contentDescription = "Edit")
+                if (selectionCount==1) {
+                    IconButton(onClick = { onEditSelection() }) {
+                        Icon(imageVector = Icons.Default.Edit, contentDescription = "Edit")
+                    }
                 }
+
                 IconButton(onClick = { onShareSelection() }) {
                     Icon(imageVector = Icons.Default.Share , contentDescription = "Share")
                 }
+
                 IconButton(onClick = { onCopySelection() }) {
                     Icon(imageVector = Icons.Default.Warning , contentDescription = "Copy")
                 }
+
                 IconButton(onClick = {onDeleteSelection() }) {
                     Icon(imageVector = Icons.Default.Delete , contentDescription = "Delete")
                 }
@@ -345,3 +365,20 @@ fun NoteEditVew(
         }
     }
 }
+
+private fun toggleSelection(sharedViewModel: SharedViewModel,selectedNote:Set<Long>,noteItem: Note, onToggle: (Set<Long>) -> Unit) {
+    val isSelected = if (noteItem.isSelected == 0L) 1L else 0L
+    val note = noteItem.copy(isSelected = isSelected)
+    val mList = selectedNote.toMutableList()
+    if (note.isSelected != 0L) {
+        mList.add(note.id)
+    } else {
+        val noteId = mList.find{id-> id == note.id}
+        mList.remove(noteId)
+    }
+    sharedViewModel.addNote(note)
+    onToggle(mList.toSet())
+}
+
+private fun toggleBackGroundColor(noteItem: Note) = if (noteItem.isSelected != 0L) Color.Green else Color.Transparent
+

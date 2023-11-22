@@ -21,8 +21,11 @@ class SqlDelightNoteDataSourceImpl(db: NoteDatabase) : NoteDataSource {
             it.map { note ->
                 Note(
                     id = note.id,
-                    title = note.title,
+                    text = note.text,
                     desc = note.desc,
+                    groupUuid = note.groupUuid,
+                    groupId = note.groupId,
+                    isSelected = note.isSelected,
                     dateCreated = note.dateCreated
                 )
             }
@@ -42,10 +45,11 @@ class SqlDelightNoteDataSourceImpl(db: NoteDatabase) : NoteDataSource {
     override suspend fun insertNote(note: Note) {
         query.insertNote(
             id = note.id,
-            title = note.title,
+            text = note.text,
             desc = note.desc,
             groupId=note.groupId,
             groupUuid=note.groupUuid,
+            isSelected = note.isSelected,
             dateCreated = note.dateCreated
         )
     }
@@ -62,14 +66,13 @@ class SqlDelightNoteDataSourceImpl(db: NoteDatabase) : NoteDataSource {
         val noteFlow = query.getAllNotesByGroupUuid(uuid).asFlow().mapToList()
         return noteFlow.map {
             it.map { note ->
-                Note(
-                    id = note.id,
-                    title = note.title,
-                    desc = note.desc,
-                    dateCreated = note.dateCreated
-                )
+                note.toNote()
             }
         }
+    }
+
+    override suspend fun unSelectNotes(setStateValue: Long, queryStateValue: Long) {
+        query.unSelectNotes(setStateValue,queryStateValue)
     }
 
     //region NOTE GROUP

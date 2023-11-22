@@ -6,8 +6,11 @@ import database.NoteGroupEntity
 fun NoteEntity.toNote(): com.tutorials.firstkmp.domain.Note {
     return com.tutorials.firstkmp.domain.Note(
         id = id,
-        title = title,
+        text = text,
         desc = desc,
+        groupId = groupId,
+        groupUuid = groupUuid,
+        isSelected = isSelected,
         dateCreated = dateCreated
     )
 }
