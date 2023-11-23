@@ -83,6 +83,23 @@ class SqlDelightNoteDataSourceImpl(db: NoteDatabase) : NoteDataSource {
         }
     }
 
+    override suspend fun getNotesById(idList: List<Long>): List<Note> {
+        val list = mutableListOf<Note>()
+        /*query.transaction {
+            idList.forEach {
+                query.getNoteById(it).executeAsOneOrNull()?.toNote()?.let { note ->
+                    list.add(note)
+                }
+            }
+        }*/
+        idList.forEach {
+            getNoteById(it)?.let { note ->
+                list.add(note)
+            }
+        }
+        return list
+    }
+
     //region NOTE GROUP
     override fun getAllNoteGroup(): Flow<List<NoteGroup>> {
         val noteGroupFlow = groupQuery.getAllNoteGroup().asFlow().mapToList()

@@ -33,7 +33,7 @@ class SharedViewModel(private val noteDataSource: NoteDataSource) : ViewModel() 
         }
     }
 
-    fun loadAllNotesByGroup(uuid:Long) {
+    fun loadAllNotesByGroup(uuid: Long) {
         viewModelScope.launch {
             noteDataSource.getAllNotesByGroup(uuid).collect { note ->
                 allNotesState.update { it.copy(noteList = note) }
@@ -53,38 +53,41 @@ class SharedViewModel(private val noteDataSource: NoteDataSource) : ViewModel() 
         }
     }
 
-    fun addNote(note: Note){
+    fun addNote(note: Note) {
         viewModelScope.launch {
             noteDataSource.insertNote(note)
         }
     }
 
-    fun deleteNote(id: Long){
+    fun deleteNote(id: Long) {
         viewModelScope.launch {
             noteDataSource.deleteNoteById(id)
         }
     }
 
-    private fun deleteAllNoteById(id: Long){
+    private fun deleteAllNoteById(id: Long) {
         viewModelScope.launch {
             noteDataSource.deleteAllNoteById(id)
         }
     }
 
-    fun deleteNotesInIdList(idList: List<Long>){
+    fun deleteNotesInIdList(idList: List<Long>) {
         viewModelScope.launch {
             noteDataSource.deleteNoteInIdList(idList)
         }
     }
 
-    fun clearSelection(){
+    suspend fun getNotesById(idList: List<Long>) = noteDataSource.getNotesById(idList)
+
+
+    fun clearSelection() {
         viewModelScope.launch {
             noteDataSource.unSelectNotes(setStateValue = 0L, queryStateValue = 1L)
         }
     }
 
 
-  fun loadAllNoteGroup() {
+    fun loadAllNoteGroup() {
         viewModelScope.launch {
             noteDataSource.getAllNoteGroup().collect { noteGroup ->
                 allNoteGroupState.update { it.copy(groupList = noteGroup) }
@@ -97,7 +100,7 @@ class SharedViewModel(private val noteDataSource: NoteDataSource) : ViewModel() 
     }
 
 
-    fun addNoteGroup(noteGroup: NoteGroup){
+    fun addNoteGroup(noteGroup: NoteGroup) {
         viewModelScope.launch {
             noteDataSource.insertNoteGroup(noteGroup)
         }
@@ -109,7 +112,7 @@ class SharedViewModel(private val noteDataSource: NoteDataSource) : ViewModel() 
         }
     }
 
-    fun deleteNoteGroup(id: Long){
+    fun deleteNoteGroup(id: Long) {
         viewModelScope.launch(Dispatchers.IO) {
             noteDataSource.deleteNoteGroupById(id)
             deleteAllNoteById(id)
@@ -123,7 +126,6 @@ class SharedViewModel(private val noteDataSource: NoteDataSource) : ViewModel() 
             }
         }
     }
-
 
 
 }

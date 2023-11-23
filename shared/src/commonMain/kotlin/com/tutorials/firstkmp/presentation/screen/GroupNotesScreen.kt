@@ -39,21 +39,27 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.tutorials.firstkmp.PlatformUtil
 import com.tutorials.firstkmp.domain.Note
 import com.tutorials.firstkmp.domain.NoteGroup
 import com.tutorials.firstkmp.domain.NoteType
 import com.tutorials.firstkmp.presentation.SharedViewModel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
@@ -61,11 +67,14 @@ import org.jetbrains.compose.resources.painterResource
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalResourceApi::class)
 @Composable
 fun NoteGroupItemScreen(
+    platformUtil: PlatformUtil,
     sharedViewModel: SharedViewModel,
     groupUuid: Long,
     onNavigateUp: () -> Unit,
     onEditNavigate: (NoteGroup) -> Unit
 ) {
+
+    val copyNoteScope = rememberCoroutineScope()
     val lazyListState = rememberLazyListState()
 
     var noteGroup by remember {
@@ -91,9 +100,14 @@ fun NoteGroupItemScreen(
         sharedViewModel.loadAllNotesByGroup(groupUuid)
     }
 
-    LaunchedEffect(selectedNote){
+    LaunchedEffect(selectedNote) {
         if (selectedNote.isNotEmpty()) {
             editableNote = uiState.noteList.find { it.id == selectedNote.first() }
+        }
+    }
+    DisposableEffect(copyNoteScope) {
+        onDispose {
+            copyNoteScope.cancel("On Dispose Screen")
         }
     }
 
@@ -162,7 +176,7 @@ fun NoteGroupItemScreen(
                                     selectedNote,
                                     noteItem = note,
                                     onToggle = {
-                                        selectedNote =it
+                                        selectedNote = it
                                     }
                                 )
                             },
@@ -217,8 +231,30 @@ fun NoteGroupItemScreen(
                                     noteText = note.text
                                 }
                             },
-                            onShareSelection = {},
-                            onCopySelection = {},
+                            onShareSelection = {
+                                shareSelection(
+                                    shareNoteScope = copyNoteScope,
+                                    sharedViewModel = sharedViewModel,
+                                    selectedNote = selectedNote,
+                                    platformUtil = platformUtil,
+                                    onShareComplete = {
+                                        sharedViewModel.clearSelection()
+                                        selectedNote = emptySet()
+                                    }
+                                )
+                            },
+                            onCopySelection = {
+                                copySelection(
+                                    copyNoteScope = copyNoteScope,
+                                    sharedViewModel = sharedViewModel,
+                                    selectedNote = selectedNote,
+                                    platformUtil = platformUtil,
+                                    onCopyComplete = {
+                                        sharedViewModel.clearSelection()
+                                        selectedNote = emptySet()
+                                    }
+                                )
+                            },
                             onDeleteSelection = {
                                 sharedViewModel.deleteNotesInIdList(selectedNote.toList())
                                 selectedNote = emptySet()
@@ -232,7 +268,7 @@ fun NoteGroupItemScreen(
 }
 
 @Composable
-fun NoteItem(note: Note,onClick: (noteItem: Note) -> Unit) {
+fun NoteItem(note: Note, onClick: (noteItem: Note) -> Unit) {
     Surface {
         Box(
             modifier = Modifier.fillMaxWidth().background(
@@ -245,13 +281,13 @@ fun NoteItem(note: Note,onClick: (noteItem: Note) -> Unit) {
             ), contentAlignment = Alignment.CenterEnd
 
         ) {
-            Column( modifier = Modifier
+            Column(modifier = Modifier
                 .wrapContentSize()
                 .background(
                     color = Color.Gray, shape = RoundedCornerShape(
                         CornerSize(8.dp)
                     )
-                ).clickable  {
+                ).clickable {
                     onClick(note)
                 }
                 .padding(8.dp)) {
@@ -300,7 +336,6 @@ fun AddNoteView(
 ) {
 
 
-
     Box {
         Row(
             modifier = Modifier
@@ -344,7 +379,7 @@ fun AddNoteView(
                 shape = CircleShape, onClick = {
                     /*TODO: save note*/
                     if (noteText.trim().isNotEmpty()) {
-                        if (isEditMode){
+                        if (isEditMode) {
                             onEditNote(false)
                             onValueChange("")
 
@@ -374,64 +409,137 @@ fun AddNoteView(
 
 @Composable
 fun NoteEditVew(
-    selectionCount:Int,
+    selectionCount: Int,
     firstNote: Note,
-    onClearSelection:()->Unit,
-    onEditSelection:()->Unit,
-    onShareSelection:()->Unit,
-    onCopySelection:()->Unit,
-    onDeleteSelection:()->Unit,
+    onClearSelection: () -> Unit,
+    onEditSelection: () -> Unit,
+    onShareSelection: () -> Unit,
+    onCopySelection: () -> Unit,
+    onDeleteSelection: () -> Unit,
 ) {
 
     Surface(modifier = Modifier.fillMaxWidth()) {
         Box {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 IconButton(onClick = { onClearSelection() }) {
-                    Icon(imageVector = Icons.Default.Clear , contentDescription = "Close")
+                    Icon(imageVector = Icons.Default.Clear, contentDescription = "Close")
                 }
 
                 Text(text = "$selectionCount")
             }
 
-            Row (modifier = Modifier.align(Alignment.CenterEnd),verticalAlignment = Alignment.CenterVertically){
-                if (selectionCount==1 && NoteType.canBeCopied(firstNote.noteType) ) {
+            Row(
+                modifier = Modifier.align(Alignment.CenterEnd),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                if (selectionCount == 1 && NoteType.canBeCopied(firstNote.noteType)) {
                     IconButton(onClick = { onEditSelection() }) {
                         Icon(imageVector = Icons.Default.Edit, contentDescription = "Edit")
                     }
                 }
 
                 IconButton(onClick = { onShareSelection() }) {
-                    Icon(imageVector = Icons.Default.Share , contentDescription = "Share")
+                    Icon(imageVector = Icons.Default.Share, contentDescription = "Share")
                 }
 
                 IconButton(onClick = { onCopySelection() }) {
-                    Icon(imageVector = Icons.Default.Warning , contentDescription = "Copy")
+                    Icon(imageVector = Icons.Default.Warning, contentDescription = "Copy")
                 }
 
-                IconButton(onClick = {onDeleteSelection() }) {
-                    Icon(imageVector = Icons.Default.Delete , contentDescription = "Delete")
+                IconButton(onClick = { onDeleteSelection() }) {
+                    Icon(imageVector = Icons.Default.Delete, contentDescription = "Delete")
                 }
             }
-
 
 
         }
     }
 }
 
-private fun toggleSelection(sharedViewModel: SharedViewModel,selectedNote:Set<Long>,noteItem: Note, onToggle: (Set<Long>) -> Unit) {
+private fun toggleSelection(
+    sharedViewModel: SharedViewModel,
+    selectedNote: Set<Long>,
+    noteItem: Note,
+    onToggle: (Set<Long>) -> Unit
+) {
     val isSelected = if (noteItem.isSelected == 0L) 1L else 0L
     val note = noteItem.copy(isSelected = isSelected)
     val mList = selectedNote.toMutableList()
     if (note.isSelected != 0L) {
         mList.add(note.id)
     } else {
-        val noteId = mList.find{id-> id == note.id}
+        val noteId = mList.find { id -> id == note.id }
         mList.remove(noteId)
     }
     sharedViewModel.addNote(note)
     onToggle(mList.toSet())
 }
 
-private fun toggleBackGroundColor(noteItem: Note) = if (noteItem.isSelected != 0L) Color.Green else Color.Transparent
+private fun toggleBackGroundColor(noteItem: Note) =
+    if (noteItem.isSelected != 0L) Color.Green else Color.Transparent
 
+private fun copySelection(
+    copyNoteScope: CoroutineScope,
+    sharedViewModel: SharedViewModel,
+    selectedNote: Set<Long>,
+    platformUtil: PlatformUtil,
+    onCopyComplete: () -> Unit
+) {
+    copyNoteScope.launch {
+        val selectedNoteList =
+            sharedViewModel.getNotesById(selectedNote.toList())
+
+        if (selectedNoteList.size == 1) {
+            platformUtil.copyToClipboard(
+                selectedNoteList.first().text,
+                "Text copied"
+            )
+            onCopyComplete()
+        }
+        if (selectedNoteList.size > 1) {
+            val stringBuilder = StringBuilder()
+            selectedNoteList.forEach { note ->
+                stringBuilder.append("${note.text}\n")
+            }
+            platformUtil.copyToClipboard(
+                stringBuilder.toString(),
+                "Texts copied"
+            )
+            onCopyComplete()
+        }
+    }
+
+}
+
+private fun shareSelection(
+    shareNoteScope: CoroutineScope,
+    sharedViewModel: SharedViewModel,
+    selectedNote: Set<Long>,
+    platformUtil: PlatformUtil,
+    onShareComplete: () -> Unit
+) {
+    shareNoteScope.launch {
+        val selectedNoteList =
+            sharedViewModel.getNotesById(selectedNote.toList())
+
+        if (selectedNoteList.size == 1) {
+            platformUtil.shareText(
+                selectedNoteList.first().text,
+                "Share text"
+            )
+            onShareComplete()
+        }
+        if (selectedNoteList.size > 1) {
+            val stringBuilder = StringBuilder()
+            selectedNoteList.forEach { note ->
+                stringBuilder.append("${note.text}\n")
+            }
+            platformUtil.shareText(
+                stringBuilder.toString(),
+                "Share text"
+            )
+            onShareComplete()
+        }
+    }
+
+}

@@ -8,3 +8,12 @@ class IOSPlatform: Platform {
 
 actual fun getPlatform(): Platform = IOSPlatform()
 actual fun getViewPlatform(): Platform = IOSPlatform()
+
+actual class PlatformUtil{
+    actual fun copyToClipboard(textToCopy: String, toastMessage: String) {
+        // TODO: platform copy logic here
+    }
+    actual fun shareText(text: String, intentTitle: String) {
+        // TODO: platform share logic here
+    }
+}

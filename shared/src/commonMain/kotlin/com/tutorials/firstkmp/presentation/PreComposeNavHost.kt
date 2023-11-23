@@ -1,6 +1,7 @@
 package com.tutorials.firstkmp.presentation
 
 import androidx.compose.runtime.Composable
+import com.tutorials.firstkmp.PlatformUtil
 import com.tutorials.firstkmp.presentation.screen.AddEditNoteGroup
 import com.tutorials.firstkmp.presentation.screen.NoteGroupItemScreen
 import com.tutorials.firstkmp.presentation.screen.NoteHomeScreen
@@ -12,7 +13,11 @@ import moe.tlaster.precompose.navigation.path
 import moe.tlaster.precompose.navigation.transition.NavTransition
 
 @Composable
-fun PreComposeNavHost(navigator: Navigator,sharedViewModel: SharedViewModel) {
+fun PreComposeNavHost(
+    platformUtil: PlatformUtil,
+    navigator: Navigator,
+    sharedViewModel: SharedViewModel
+) {
 
     NavHost(
         navigator = navigator,
@@ -65,11 +70,12 @@ fun PreComposeNavHost(navigator: Navigator,sharedViewModel: SharedViewModel) {
 
         scene(
             NoteNavigationRoute.NoteGroupItemScreen.route
-        ) {backStackEntry->
-            val noteGroupUuid = backStackEntry.path<Long>("group_uuid")?: 0L
+        ) { backStackEntry ->
+            val noteGroupUuid = backStackEntry.path<Long>("group_uuid") ?: 0L
             NoteGroupItemScreen(
+                platformUtil = platformUtil,
                 sharedViewModel = sharedViewModel,
-                groupUuid = noteGroupUuid ,
+                groupUuid = noteGroupUuid,
                 onNavigateUp = {
                     val navOptions = NavOptions(
                         popUpTo = PopUpTo(
@@ -83,7 +89,11 @@ fun PreComposeNavHost(navigator: Navigator,sharedViewModel: SharedViewModel) {
                     )
                 },
                 onEditNavigate = {
-                    navigator.navigate(NoteNavigationRoute.AddEditNoteGroupScreen.navigateWithArgs(it.uuid))
+                    navigator.navigate(
+                        NoteNavigationRoute.AddEditNoteGroupScreen.navigateWithArgs(
+                            it.uuid
+                        )
+                    )
                 }
             )
         }

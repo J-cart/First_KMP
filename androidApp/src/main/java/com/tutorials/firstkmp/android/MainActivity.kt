@@ -10,6 +10,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import com.tutorials.firstkmp.PlatformUtil
 import com.tutorials.firstkmp.core.DatabaseDriverFactory
 import com.tutorials.firstkmp.data.SqlDelightNoteDataSourceImpl
 import com.tutorials.firstkmp.database.NoteDatabase
@@ -19,6 +20,7 @@ import moe.tlaster.precompose.PreComposeApp
 
 class MainActivity : ComponentActivity() {
     private val db = NoteDatabase(driver = DatabaseDriverFactory(this).createDriver())
+    private val platformUtil = PlatformUtil(this)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -30,6 +32,7 @@ class MainActivity : ComponentActivity() {
                     ) {
 
                         MainView(
+                            platformUtil,
                             SqlDelightNoteDataSourceImpl(db)
                         )
 
