@@ -183,7 +183,10 @@ fun NoteGroupItemScreen(
                         onEditSelection = {},
                         onShareSelection = {},
                         onCopySelection = {},
-                        onDeleteSelection = {}
+                        onDeleteSelection = {
+                            sharedViewModel.deleteNotesInIdList(selectedNote.toList())
+                            selectedNote = emptySet()
+                        }
                     )
                 }
             }

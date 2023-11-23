@@ -71,6 +71,12 @@ class SharedViewModel(private val noteDataSource: NoteDataSource) : ViewModel() 
         }
     }
 
+    fun deleteNotesInIdList(idList: List<Long>){
+        viewModelScope.launch {
+            noteDataSource.deleteNoteInIdList(idList)
+        }
+    }
+
     fun clearSelection(){
         viewModelScope.launch {
             noteDataSource.unSelectNotes(setStateValue = 0L, queryStateValue = 1L)

@@ -75,6 +75,14 @@ class SqlDelightNoteDataSourceImpl(db: NoteDatabase) : NoteDataSource {
         query.unSelectNotes(setStateValue,queryStateValue)
     }
 
+    override suspend fun deleteNoteInIdList(idList: List<Long>) {
+        query.transaction {
+            idList.forEach {
+                query.deleteNoteById(it)
+            }
+        }
+    }
+
     //region NOTE GROUP
     override fun getAllNoteGroup(): Flow<List<NoteGroup>> {
         val noteGroupFlow = groupQuery.getAllNoteGroup().asFlow().mapToList()
