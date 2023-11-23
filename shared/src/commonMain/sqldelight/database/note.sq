@@ -7,7 +7,7 @@ CREATE TABLE NoteEntity(
     groupUuid INTEGER NOT NULL,
     text TEXT NOT NULL,
     isSelected INTEGER NOT NULL,
-    desc TEXT NOT NULL,
+    noteType INTEGER NOT NULL,
     dateCreated INTEGER NOT NULL
 );
 
@@ -21,7 +21,7 @@ getNoteById:
 SELECT * FROM NoteEntity WHERE id = ?;
 
 insertNote:
-INSERT OR REPLACE INTO NoteEntity(id,text,groupId,isSelected,groupUuid,desc,dateCreated) VALUES(?,?,?,?,?,?,?);
+INSERT OR REPLACE INTO NoteEntity(id,text,groupId,isSelected,groupUuid,noteType,dateCreated) VALUES(?,?,?,?,?,?,?);
 
 deleteNoteById:
 DELETE FROM NoteEntity WHERE id = ?;

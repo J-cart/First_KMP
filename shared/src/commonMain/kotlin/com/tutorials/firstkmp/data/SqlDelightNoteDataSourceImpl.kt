@@ -22,7 +22,7 @@ class SqlDelightNoteDataSourceImpl(db: NoteDatabase) : NoteDataSource {
                 Note(
                     id = note.id,
                     text = note.text,
-                    desc = note.desc,
+                    noteType = note.noteType.toInt(),
                     groupUuid = note.groupUuid,
                     groupId = note.groupId,
                     isSelected = note.isSelected,
@@ -46,7 +46,7 @@ class SqlDelightNoteDataSourceImpl(db: NoteDatabase) : NoteDataSource {
         query.insertNote(
             id = note.id,
             text = note.text,
-            desc = note.desc,
+            noteType = note.noteType.toLong(),
             groupId=note.groupId,
             groupUuid=note.groupUuid,
             isSelected = note.isSelected,

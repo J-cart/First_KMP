@@ -52,6 +52,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tutorials.firstkmp.domain.Note
 import com.tutorials.firstkmp.domain.NoteGroup
+import com.tutorials.firstkmp.domain.NoteType
 import com.tutorials.firstkmp.presentation.SharedViewModel
 import kotlinx.datetime.Clock
 import org.jetbrains.compose.resources.ExperimentalResourceApi
@@ -75,12 +76,25 @@ fun NoteGroupItemScreen(
         mutableStateOf<Set<Long>>(emptySet())
     }
 
+    var noteText by remember {
+        mutableStateOf("")
+    }
+
+    var editableNote by remember { mutableStateOf<Note?>(null) }
+    var isEditMode by remember { mutableStateOf(false) }
+
     val uiState by sharedViewModel.allNotesState.collectAsState()
     val uiGroupState by sharedViewModel.noteGroupState.collectAsState()
 
     LaunchedEffect(Unit) {
         sharedViewModel.getNoteGroupByUuid(groupUuid)
         sharedViewModel.loadAllNotesByGroup(groupUuid)
+    }
+
+    LaunchedEffect(selectedNote){
+        if (selectedNote.isNotEmpty()) {
+            editableNote = uiState.noteList.find { it.id == selectedNote.first() }
+        }
     }
 
     Scaffold(topBar = {
@@ -172,22 +186,45 @@ fun NoteGroupItemScreen(
                         .background(color = Color.LightGray)
                 )
                 if (selectedNote.isEmpty()) {
-                   AddNoteView(sharedViewModel, groupUuid, noteGroup)
-                }else{
-                    NoteEditVew(
-                        selectedNote.size,
-                        onClearSelection = {
-                            sharedViewModel.clearSelection()
-                            selectedNote = emptySet()
+                    AddNoteView(
+                        noteText = noteText,
+                        sharedViewModel = sharedViewModel,
+                        groupUuid = groupUuid,
+                        noteGroup = noteGroup,
+                        onValueChange = {
+                            noteText = it
+                        }, onEditNote = {
+                            editableNote?.copy(text = noteText, isSelected = 0L)?.let { editNote ->
+                                sharedViewModel.addNote(editNote)
+                                isEditMode = it
+                            }
                         },
-                        onEditSelection = {},
-                        onShareSelection = {},
-                        onCopySelection = {},
-                        onDeleteSelection = {
-                            sharedViewModel.deleteNotesInIdList(selectedNote.toList())
-                            selectedNote = emptySet()
-                        }
+                        isEditMode = isEditMode
                     )
+                } else {
+                    editableNote?.let {
+                        NoteEditVew(
+                            selectedNote.size,
+                            firstNote = it,
+                            onClearSelection = {
+                                sharedViewModel.clearSelection()
+                                selectedNote = emptySet()
+                            },
+                            onEditSelection = {
+                                selectedNote = emptySet()
+                                editableNote?.let { note ->
+                                    isEditMode = true
+                                    noteText = note.text
+                                }
+                            },
+                            onShareSelection = {},
+                            onCopySelection = {},
+                            onDeleteSelection = {
+                                sharedViewModel.deleteNotesInIdList(selectedNote.toList())
+                                selectedNote = emptySet()
+                            }
+                        )
+                    }
                 }
             }
         }
@@ -252,10 +289,16 @@ fun NoteItemList(
 }
 
 @Composable
-fun AddNoteView(sharedViewModel: SharedViewModel,groupUuid: Long,noteGroup: NoteGroup) {
-    var noteText by remember {
-        mutableStateOf("")
-    }
+fun AddNoteView(
+    isEditMode: Boolean,
+    noteText: String,
+    onValueChange: (String) -> Unit,
+    onEditNote: (Boolean) -> Unit,
+    sharedViewModel: SharedViewModel,
+    groupUuid: Long,
+    noteGroup: NoteGroup
+) {
+
 
 
     Box {
@@ -276,7 +319,7 @@ fun AddNoteView(sharedViewModel: SharedViewModel,groupUuid: Long,noteGroup: Note
                     Text(text = "What's on your mind?", color = Color.LightGray)
                 },
                 onValueChange = {
-                    noteText = it
+                    onValueChange(it)
                 },
                 colors = TextFieldDefaults.colors(
                     focusedIndicatorColor = Color.Transparent,
@@ -301,6 +344,12 @@ fun AddNoteView(sharedViewModel: SharedViewModel,groupUuid: Long,noteGroup: Note
                 shape = CircleShape, onClick = {
                     /*TODO: save note*/
                     if (noteText.trim().isNotEmpty()) {
+                        if (isEditMode){
+                            onEditNote(false)
+                            onValueChange("")
+
+                            return@FilledIconButton
+                        }
                         val note = Note(
                             id = Clock.System.now().toEpochMilliseconds(),
                             text = noteText.trim(),
@@ -309,7 +358,7 @@ fun AddNoteView(sharedViewModel: SharedViewModel,groupUuid: Long,noteGroup: Note
                             dateCreated = Clock.System.now().toEpochMilliseconds()
                         )
                         sharedViewModel.addNote(note)
-                        noteText = ""
+                        onValueChange("")
                     }
 
                 }) {
@@ -326,6 +375,7 @@ fun AddNoteView(sharedViewModel: SharedViewModel,groupUuid: Long,noteGroup: Note
 @Composable
 fun NoteEditVew(
     selectionCount:Int,
+    firstNote: Note,
     onClearSelection:()->Unit,
     onEditSelection:()->Unit,
     onShareSelection:()->Unit,
@@ -344,7 +394,7 @@ fun NoteEditVew(
             }
 
             Row (modifier = Modifier.align(Alignment.CenterEnd),verticalAlignment = Alignment.CenterVertically){
-                if (selectionCount==1) {
+                if (selectionCount==1 && NoteType.canBeCopied(firstNote.noteType) ) {
                     IconButton(onClick = { onEditSelection() }) {
                         Icon(imageVector = Icons.Default.Edit, contentDescription = "Edit")
                     }

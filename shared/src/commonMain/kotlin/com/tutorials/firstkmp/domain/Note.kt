@@ -6,6 +6,6 @@ data class Note(
     val groupUuid:Long = 0L,
     val text:String= "",
     val isSelected:Long = 0L,
-    val desc:String = "",
+    val noteType:Int = NoteType.TEXT,
     val dateCreated:Long = 0L
 )
