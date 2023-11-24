@@ -40,12 +40,12 @@ actual class ImageUtil{
         return null
     }
 
-    actual suspend fun saveImage(bytes: ByteArray?):String{
+    actual suspend fun saveImage(bytes: ByteArray?):String?{
         // TODO: platform save image
         return ""
     }
 
-    actual suspend fun getImage(fileName: String):ByteArray?{
+    actual suspend fun getImage(fileName: String):ImageBitmap?{
         // TODO: platform getImage
         return null
     }

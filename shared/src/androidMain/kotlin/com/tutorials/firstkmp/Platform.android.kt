@@ -4,15 +4,25 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import java.io.File
+import java.io.FileNotFoundException
+import java.io.FileOutputStream
+import java.io.InputStream
 
 class AndroidPlatform : Platform {
     override val name: String = "Android ${android.os.Build.VERSION.SDK_INT}"
@@ -49,10 +59,14 @@ actual class PlatformUtil(private val context: Context) {
 actual class ImageUtil{
 
     private lateinit var getContent: ActivityResultLauncher<String>
+    private lateinit var mContext: Context
+    private lateinit var ioScope:CoroutineScope
 
     @Composable
     actual fun registerPicker(onImagePicked: (ByteArray) -> Unit) {
         val context = LocalContext.current
+        ioScope = rememberCoroutineScope()
+        mContext = context
         getContent =
             rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
                 uri?.let {
@@ -73,20 +87,78 @@ actual class ImageUtil{
         } else null
     }
 
-    actual suspend fun saveImage(bytes: ByteArray?):String{
-        return ""
+    actual suspend fun saveImage(bytes: ByteArray?):String?{
+        var filePath:String? = null
+        bytes?.let {imgBytes->
+            createImageFile(mContext) {
+                filePath = it.absolutePath
+                filePath?.let {path->
+                    saveBitmapToFile(imgBytes,path)
+                }
+            }
+        }
+        return filePath
     }
 
-    actual suspend fun getImage(fileName: String):ByteArray?{
-        return null
+    actual suspend fun getImage(fileName: String):ImageBitmap?{
+        return getBitmapFromFilePath(fileName)?.asImageBitmap()
     }
 
     actual suspend fun deleteImage(fileName: String){
-
+        ioScope.launch (Dispatchers.IO){
+            try {
+                File(fileName).delete()
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
     }
 
 
 
+}
+
+
+private fun createImageFile(context: Context,onFileCreated:(File)->Unit) {
+    val fileName = System.currentTimeMillis().toString() + ".jpg"
+    val fileDir = File(context.filesDir, "images")
+    if (!fileDir.exists()) fileDir.mkdir()
+    val file = File(fileDir, fileName)
+   onFileCreated(file)
+}
+
+
+//3.
+fun getBitmapFromUri(
+    context: Context,
+    uri: Uri?,
+): Bitmap? {
+    var inputStream: InputStream? = null
+    try {
+        inputStream = context.contentResolver.openInputStream(uri!!)
+    } catch (e: java.lang.Exception) {
+        e.printStackTrace()
+    }
+    BitmapFactory.decodeStream(inputStream)
+    try {
+        inputStream = context.contentResolver.openInputStream(uri!!)
+    } catch (e: FileNotFoundException) {
+        e.printStackTrace()
+    }
+    return BitmapFactory.decodeStream(inputStream)
+}
+
+fun getBitmapFromFilePath(
+    filePath: String,
+): Bitmap? {
+    return BitmapFactory.decodeFile(filePath)
+}
+
+
+fun saveBitmapToFile(bytes:ByteArray, filePath: String) {
+    val bitmap = BitmapFactory.decodeByteArray(bytes,0,bytes.size)
+    val outputStream = FileOutputStream(filePath)
+    bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
 }
 
 

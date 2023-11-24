@@ -7,11 +7,12 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
@@ -30,6 +31,7 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
@@ -54,15 +56,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import co.touchlab.kermit.Logger
+import com.tutorials.firstkmp.ImageUtil
 import com.tutorials.firstkmp.PlatformUtil
 import com.tutorials.firstkmp.domain.Note
 import com.tutorials.firstkmp.domain.NoteGroup
 import com.tutorials.firstkmp.domain.NoteType
 import com.tutorials.firstkmp.presentation.SharedViewModel
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
@@ -115,12 +122,9 @@ fun NoteGroupItemScreen(
             copyNoteScope.cancel("On Dispose Screen")
         }
     }
-    var imageBitmap by remember { mutableStateOf<ImageBitmap?>(null) }
 
-    val imagePicker = platformUtil.createImagePicker()
-    imagePicker.registerPicker {
-        imageBitmap = imagePicker.rememberImageBitmapFromByteArray(it)
-    }
+    val imageUtil = platformUtil.createImagePicker()
+    var imageOperationDialogState by remember { mutableStateOf(false) }
 
     Scaffold(topBar = {
         TopAppBar(
@@ -225,7 +229,8 @@ fun NoteGroupItemScreen(
                             }
                         },
                         onSelectAttachment = {
-                            imagePicker.pickImage()
+                            imageOperationDialogState = true
+                           // imagePicker.pickImage()
                         },
                         isEditMode = isEditMode
                     )
@@ -277,14 +282,17 @@ fun NoteGroupItemScreen(
                     }
                 }
             }
-            imageBitmap?.let {
-                ShowImageDialog(
-                    imageBitmap = it,
-                    onCloseAction = {
-                        imageBitmap = null
-                    }
-                )
-            }
+
+            ShowFullImageDialog(
+                imageUtil = imageUtil,
+                sharedViewModel = sharedViewModel,
+                groupUuid = groupUuid,
+                noteGroup = noteGroup,
+                updateDialogState = {
+                    imageOperationDialogState = it
+                },
+                dialogState = imageOperationDialogState
+            )
 
         }
     }
@@ -570,36 +578,172 @@ private fun shareSelection(
 }
 
 
+
 @Composable
-fun ShowImageDialog(
-    imageBitmap: ImageBitmap,
-    onCloseAction: () -> Unit
+fun ShowFullImageDialog(
+    imageUtil: ImageUtil,
+    sharedViewModel: SharedViewModel,
+    groupUuid: Long,
+    noteGroup: NoteGroup,
+    updateDialogState: (Boolean) -> Unit,
+    dialogState: Boolean
 ) {
+    val scope = rememberCoroutineScope()
 
-    Dialog(onDismissRequest = { }) {
-        Box(
-            modifier = Modifier.size(300.dp).background(
-                color = Color.White, shape = RoundedCornerShape(
-                    CornerSize(16.dp)
+    var imageBitmap by remember { mutableStateOf<ImageBitmap?>(null) }
+    var imageByteArray by remember { mutableStateOf<ByteArray>(byteArrayOf()) }
+    var savedImagePath by remember { mutableStateOf<String?>(null) }
+    var savedImageBitmap by remember { mutableStateOf<ImageBitmap?>(null) }
+
+    imageUtil.registerPicker {
+        imageByteArray = it
+        imageBitmap = imageUtil.rememberImageBitmapFromByteArray(it)
+    }
+
+    val imageUiState by sharedViewModel.noteImageState.collectAsState()
+
+    LaunchedEffect(imageUiState.noteList) {
+        savedImageBitmap = if (imageUiState.noteList.isNotEmpty()) {
+            imageUtil.getImage(imageUiState.noteList.last().text)
+        } else {
+            null
+        }
+
+    }
+    if (dialogState) {
+
+        Dialog(onDismissRequest = { }) {
+            Box(
+                modifier = Modifier.fillMaxSize().background(
+                    color = Color.White, shape = RoundedCornerShape(
+                        CornerSize(16.dp)
+                    )
                 )
-            ),
-            contentAlignment = Alignment.Center
-        ) {
 
-            Image(modifier = Modifier.padding(8.dp), bitmap = imageBitmap, contentScale = ContentScale.FillBounds, contentDescription = "Image")
+            ) {
+                Column(modifier = Modifier.fillMaxSize()) {
+                    Text(
+                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                            .padding(top = 16.dp),
+                        text = "--Selected Image--",
+                        fontWeight = FontWeight.Bold
+                    )
 
-            IconButton(
-                modifier = Modifier.background(color = Color.White, shape = CircleShape)
-                    .align(Alignment.TopEnd).padding(8.dp), onClick = {
-                    onCloseAction()
-                }) {
-                Icon(imageVector = Icons.Default.Close, contentDescription = "Close")
+                    Box(
+                        modifier = Modifier.fillMaxWidth().padding(8.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        imageBitmap?.let {
+                            Image(
+                                modifier = Modifier.fillMaxWidth().height(250.dp),
+                                bitmap = it,
+                                contentScale = ContentScale.FillBounds,
+                                contentDescription = "Image"
+                            )
+                        }
 
+                        IconButton(
+                            modifier = Modifier.background(color = Color.White, shape = CircleShape)
+                                .align(Alignment.TopEnd).padding(4.dp), onClick = {
+                                updateDialogState(false)
+                            }) {
+                            Icon(imageVector = Icons.Default.Close, contentDescription = "Close")
+
+                        }
+                        IconButton(
+                            modifier = Modifier.background(color = Color.White, shape = CircleShape)
+                                .align(Alignment.TopStart).padding(4.dp), onClick = {
+                                imageUtil.pickImage()
+                            }) {
+                            Icon(imageVector = Icons.Default.Edit, contentDescription = "Select")
+
+                        }
+                    }
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        imageBitmap?.let {
+                            Button(onClick = {
+                                scope.launch {
+                                    val path = imageUtil.saveImage(imageByteArray)
+                                    savedImagePath = path
+                                    path?.let {
+                                        val note = Note(
+                                            id = Clock.System.now().toEpochMilliseconds(),
+                                            text = it,
+                                            groupUuid = groupUuid,
+                                            groupId = noteGroup.id!!,
+                                            noteType = NoteType.IMAGE,
+                                            dateCreated = Clock.System.now().toEpochMilliseconds()
+                                        )
+                                        sharedViewModel.addNote(note)
+                                    } ?: Logger.d("JOENOTETAG") { "save Image path(null): $path" }
+                                }
+                            }) {
+                                Text("Save")
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.width(8.dp))
+
+                        Button(onClick = {
+                            imageBitmap = null
+                        }) {
+                            Text("Clear")
+                        }
+                        Spacer(modifier = Modifier.width(16.dp))
+                    }
+
+                    Text(
+                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                            .padding(top = 10.dp),
+                        text = "--Last Saved Image--",
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    Box(
+                        modifier = Modifier.fillMaxWidth().padding(8.dp),
+                        contentAlignment = Alignment.Center
+                    )
+                    {
+                        savedImageBitmap?.let {
+                            Image(
+                                modifier = Modifier.fillMaxWidth().height(250.dp),
+                                bitmap = it,
+                                contentScale = ContentScale.FillBounds,
+                                contentDescription = "Image"
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    if (imageUiState.noteList.isNotEmpty()) {
+                        Button(
+                            modifier = Modifier.align(Alignment.End).padding(end = 16.dp),
+                            onClick = {
+                                scope.launch(Dispatchers.IO) {
+                                    val lastNote = imageUiState.noteList.last()
+                                    sharedViewModel.deleteNote(lastNote.id)
+                                    imageUtil.deleteImage(lastNote.text)
+                                }
+                            }) {
+                            Text("Delete")
+                        }
+                    }
+                }
             }
 
         }
 
+        DisposableEffect(scope) {
+            onDispose {
+                scope.cancel("Image Operation Scope closed")
+            }
+        }
+
     }
-
-
 }

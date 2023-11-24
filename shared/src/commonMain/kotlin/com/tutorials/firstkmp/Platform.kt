@@ -24,9 +24,9 @@ expect class ImageUtil {
 
     fun rememberImageBitmapFromByteArray(bytes:ByteArray?):ImageBitmap?
 
-    suspend fun saveImage(bytes: ByteArray?):String
+    suspend fun saveImage(bytes: ByteArray?):String?
 
-    suspend fun getImage(fileName: String):ByteArray?
+    suspend fun getImage(fileName: String):ImageBitmap?
 
     suspend fun deleteImage(fileName: String)
 }

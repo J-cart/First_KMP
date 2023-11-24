@@ -3,6 +3,7 @@ package com.tutorials.firstkmp.presentation
 import com.tutorials.firstkmp.domain.Note
 import com.tutorials.firstkmp.domain.NoteDataSource
 import com.tutorials.firstkmp.domain.NoteGroup
+import com.tutorials.firstkmp.domain.NoteType
 import dev.icerock.moko.mvvm.viewmodel.ViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -16,6 +17,9 @@ class SharedViewModel(private val noteDataSource: NoteDataSource) : ViewModel() 
         private set
 
     var noteState = MutableStateFlow<NoteUiState>(NoteUiState())
+        private set
+
+    var noteImageState = MutableStateFlow<NoteUiState>(NoteUiState())
         private set
 
     var allNoteGroupState = MutableStateFlow<NoteGroupUiState>(NoteGroupUiState())
@@ -37,6 +41,7 @@ class SharedViewModel(private val noteDataSource: NoteDataSource) : ViewModel() 
         viewModelScope.launch {
             noteDataSource.getAllNotesByGroup(uuid).collect { note ->
                 allNotesState.update { it.copy(noteList = note) }
+                noteImageState.update { it.copy(noteList = note.filter { mNote -> mNote.noteType == NoteType.IMAGE }) }
             }
         }
     }
