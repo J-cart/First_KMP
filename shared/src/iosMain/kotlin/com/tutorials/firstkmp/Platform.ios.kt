@@ -1,5 +1,7 @@
 package com.tutorials.firstkmp
 
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.ImageBitmap
 import platform.UIKit.UIDevice
 
 class IOSPlatform: Platform {
@@ -16,4 +18,41 @@ actual class PlatformUtil{
     actual fun shareText(text: String, intentTitle: String) {
         // TODO: platform share logic here
     }
+
+   actual fun createImagePicker():ImageUtil{
+       // TODO: initialize ImageUtil()
+       return ImageUtil()
+   }
+}
+
+actual class ImageUtil{
+    @Composable
+   actual fun registerPicker(onImagePicked:(ByteArray)->Unit){
+        // TODO: platform image picker
+   }
+
+  actual  fun pickImage(){
+      // TODO: platform image picker initialization
+  }
+
+    actual fun rememberImageBitmapFromByteArray(bytes: ByteArray?): ImageBitmap? {
+        // TODO: convert byteArray to imageBitmap
+        return null
+    }
+
+    actual suspend fun saveImage(bytes: ByteArray?):String{
+        // TODO: platform save image
+        return ""
+    }
+
+    actual suspend fun getImage(fileName: String):ByteArray?{
+        // TODO: platform getImage
+        return null
+    }
+
+    actual suspend fun deleteImage(fileName: String){
+        // TODO: platform delete image
+    }
+
+
 }

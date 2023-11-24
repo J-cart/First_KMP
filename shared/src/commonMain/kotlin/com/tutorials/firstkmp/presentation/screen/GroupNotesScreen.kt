@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
@@ -21,6 +22,7 @@ import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
@@ -50,8 +52,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import com.tutorials.firstkmp.PlatformUtil
 import com.tutorials.firstkmp.domain.Note
 import com.tutorials.firstkmp.domain.NoteGroup
@@ -109,6 +114,12 @@ fun NoteGroupItemScreen(
         onDispose {
             copyNoteScope.cancel("On Dispose Screen")
         }
+    }
+    var imageBitmap by remember { mutableStateOf<ImageBitmap?>(null) }
+
+    val imagePicker = platformUtil.createImagePicker()
+    imagePicker.registerPicker {
+        imageBitmap = imagePicker.rememberImageBitmapFromByteArray(it)
     }
 
     Scaffold(topBar = {
@@ -213,6 +224,9 @@ fun NoteGroupItemScreen(
                                 isEditMode = it
                             }
                         },
+                        onSelectAttachment = {
+                            imagePicker.pickImage()
+                        },
                         isEditMode = isEditMode
                     )
                 } else {
@@ -263,6 +277,15 @@ fun NoteGroupItemScreen(
                     }
                 }
             }
+            imageBitmap?.let {
+                ShowImageDialog(
+                    imageBitmap = it,
+                    onCloseAction = {
+                        imageBitmap = null
+                    }
+                )
+            }
+
         }
     }
 }
@@ -332,6 +355,7 @@ fun AddNoteView(
     onEditNote: (Boolean) -> Unit,
     sharedViewModel: SharedViewModel,
     groupUuid: Long,
+    onSelectAttachment:()->Unit,
     noteGroup: NoteGroup
 ) {
 
@@ -367,6 +391,7 @@ fun AddNoteView(
                 modifier = Modifier
                     .clickable {
                         // TODO: select attachment
+                        onSelectAttachment()
                     }
                     .padding(end = 8.dp),
                 imageVector = Icons.Default.MoreVert,
@@ -541,5 +566,40 @@ private fun shareSelection(
             onShareComplete()
         }
     }
+
+}
+
+
+@Composable
+fun ShowImageDialog(
+    imageBitmap: ImageBitmap,
+    onCloseAction: () -> Unit
+) {
+
+    Dialog(onDismissRequest = { }) {
+        Box(
+            modifier = Modifier.size(300.dp).background(
+                color = Color.White, shape = RoundedCornerShape(
+                    CornerSize(16.dp)
+                )
+            ),
+            contentAlignment = Alignment.Center
+        ) {
+
+            Image(modifier = Modifier.padding(8.dp), bitmap = imageBitmap, contentScale = ContentScale.FillBounds, contentDescription = "Image")
+
+            IconButton(
+                modifier = Modifier.background(color = Color.White, shape = CircleShape)
+                    .align(Alignment.TopEnd).padding(8.dp), onClick = {
+                    onCloseAction()
+                }) {
+                Icon(imageVector = Icons.Default.Close, contentDescription = "Close")
+
+            }
+
+        }
+
+    }
+
 
 }
