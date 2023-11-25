@@ -3,7 +3,6 @@ plugins {
     alias(libs.plugins.androidLibrary)
     id("org.jetbrains.compose")
     id("com.squareup.sqldelight")
-//    id ("kotlin-parcelize")
 }
 
 kotlin {
@@ -14,6 +13,11 @@ kotlin {
             }
         }
     }
+
+    jvm("desktop") {
+        jvmToolchain(17)
+    }
+
     
     listOf(
         iosX64(),
@@ -64,6 +68,13 @@ kotlin {
                 api(libs.androidx.core.ktx)
 
                 implementation("com.squareup.sqldelight:android-driver:1.5.5")
+            }
+        }
+
+        val desktopMain by getting {
+            dependencies {
+                implementation(compose.desktop.currentOs)
+                implementation("com.squareup.sqldelight:sqlite-driver:1.5.3")
             }
         }
 
