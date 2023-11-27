@@ -6,7 +6,6 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.ActivityResultLauncher
@@ -20,9 +19,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.io.File
-import java.io.FileNotFoundException
 import java.io.FileOutputStream
-import java.io.InputStream
 
 class AndroidPlatform : Platform {
     override val name: String = "Android ${android.os.Build.VERSION.SDK_INT}"
@@ -63,14 +60,19 @@ actual class ImageUtil{
     private lateinit var ioScope:CoroutineScope
 
     @Composable
-    actual fun registerPicker(onImagePicked: (ByteArray) -> Unit) {
+    actual fun initUtil(){
         val context = LocalContext.current
         ioScope = rememberCoroutineScope()
         mContext = context
+    }
+
+    @Composable
+    actual fun registerPicker(onImagePicked: (ByteArray) -> Unit) {
+
         getContent =
             rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
                 uri?.let {
-                    context.contentResolver.openInputStream(uri)?.use {
+                    mContext.contentResolver.openInputStream(uri)?.use {
                         onImagePicked(it.readBytes())
                     }
                 }
@@ -127,26 +129,6 @@ private fun createImageFile(context: Context,onFileCreated:(File)->Unit) {
    onFileCreated(file)
 }
 
-
-//3.
-fun getBitmapFromUri(
-    context: Context,
-    uri: Uri?,
-): Bitmap? {
-    var inputStream: InputStream? = null
-    try {
-        inputStream = context.contentResolver.openInputStream(uri!!)
-    } catch (e: java.lang.Exception) {
-        e.printStackTrace()
-    }
-    BitmapFactory.decodeStream(inputStream)
-    try {
-        inputStream = context.contentResolver.openInputStream(uri!!)
-    } catch (e: FileNotFoundException) {
-        e.printStackTrace()
-    }
-    return BitmapFactory.decodeStream(inputStream)
-}
 
 fun getBitmapFromFilePath(
     filePath: String,

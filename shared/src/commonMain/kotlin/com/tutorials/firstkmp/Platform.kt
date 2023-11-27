@@ -20,6 +20,9 @@ expect class ImageUtil {
     @Composable
     fun registerPicker(onImagePicked: (ByteArray) -> Unit)
 
+    @Composable
+    fun initUtil()
+
     fun pickImage()
 
     fun rememberImageBitmapFromByteArray(bytes:ByteArray?):ImageBitmap?

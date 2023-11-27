@@ -7,12 +7,11 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
@@ -23,7 +22,6 @@ import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
@@ -31,7 +29,6 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
@@ -53,14 +50,12 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
-import co.touchlab.kermit.Logger
 import com.tutorials.firstkmp.ImageUtil
 import com.tutorials.firstkmp.PlatformUtil
 import com.tutorials.firstkmp.domain.Note
@@ -87,6 +82,7 @@ fun NoteGroupItemScreen(
 ) {
 
     val copyNoteScope = rememberCoroutineScope()
+    val imageNoteScope = rememberCoroutineScope()
     val lazyListState = rememberLazyListState()
 
     var noteGroup by remember {
@@ -124,7 +120,25 @@ fun NoteGroupItemScreen(
     }
 
     val imageUtil = platformUtil.createImagePicker()
-    var imageOperationDialogState by remember { mutableStateOf(false) }
+    imageUtil.initUtil()
+
+    imageUtil.registerPicker {bArray->
+        imageNoteScope.launch(Dispatchers.IO) {
+            val path = imageUtil.saveImage(bArray)
+            path?.let {
+                val note = Note(
+                    id = Clock.System.now().toEpochMilliseconds(),
+                    text = "IMAGE",
+                    media = it,
+                    groupUuid = groupUuid,
+                    groupId = noteGroup.id!!,
+                    noteType = NoteType.IMAGE,
+                    dateCreated = Clock.System.now().toEpochMilliseconds()
+                )
+                sharedViewModel.addNote(note)
+            }
+        }
+    }
 
     Scaffold(topBar = {
         TopAppBar(
@@ -184,6 +198,7 @@ fun NoteGroupItemScreen(
                         NoteItemList(
                             noteItems = uiState.noteList,
                             state = lazyListState,
+                            imageUtil = imageUtil,
                             onClick = { note ->
                                 // TODO: toggle selection
                                 toggleSelection(
@@ -229,8 +244,7 @@ fun NoteGroupItemScreen(
                             }
                         },
                         onSelectAttachment = {
-                            imageOperationDialogState = true
-                           // imagePicker.pickImage()
+                            imageUtil.pickImage()
                         },
                         isEditMode = isEditMode
                     )
@@ -275,24 +289,13 @@ fun NoteGroupItemScreen(
                                 )
                             },
                             onDeleteSelection = {
-                                sharedViewModel.deleteNotesInIdList(selectedNote.toList())
+                                sharedViewModel.deleteNotesInIdList(idList = selectedNote.toList(), imageUtil = imageUtil)
                                 selectedNote = emptySet()
                             }
                         )
                     }
                 }
             }
-
-            ShowFullImageDialog(
-                imageUtil = imageUtil,
-                sharedViewModel = sharedViewModel,
-                groupUuid = groupUuid,
-                noteGroup = noteGroup,
-                updateDialogState = {
-                    imageOperationDialogState = it
-                },
-                dialogState = imageOperationDialogState
-            )
 
         }
     }
@@ -334,12 +337,58 @@ fun NoteItem(note: Note, onClick: (noteItem: Note) -> Unit) {
     }
 }
 
+@OptIn(ExperimentalResourceApi::class)
+@Composable
+fun NoteImageItem(
+    note: Note,
+    onClick: (noteItem: Note) -> Unit,
+    imageUtil: ImageUtil,
+) {
+    var imageBitmap by remember { mutableStateOf<ImageBitmap?>(null) }
+    LaunchedEffect(Unit){
+         imageBitmap = note.media?.let { imageUtil.getImage(it) }
+    }
+
+    Box(
+        modifier = Modifier.background(
+            color = toggleBackGroundColor(note)
+        ).fillMaxWidth().padding(
+            top = (2.5).dp,
+            bottom = (2.5).dp,
+            end = 10.dp,
+            start = 10.dp
+        ), contentAlignment = Alignment.CenterEnd
+    ) {
+        Box(
+            modifier = Modifier
+                .background(color = Color.Cyan.copy(alpha = 0.4f), RoundedCornerShape(16.dp)).clickable {
+                    onClick(note)
+                }
+        ) {
+            imageBitmap?.let {
+                Image(
+                    modifier = Modifier
+                        .padding(4.dp)
+                        .size(width = 260.dp, height = 240.dp)
+                        .clip(RoundedCornerShape(16.dp)),
+                    bitmap = it,
+                    contentDescription = "Image",
+                    contentScale = ContentScale.FillBounds
+                )
+            }
+
+
+        }
+    }
+}
+
 @Composable
 fun NoteItemList(
     noteItems: List<Note>,
     state: LazyListState,
     onClick: (noteItem: Note) -> Unit,
-    onLongClick: (noteItem: Note) -> Unit
+    onLongClick: (noteItem: Note) -> Unit,
+    imageUtil: ImageUtil
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxWidth(),
@@ -347,10 +396,20 @@ fun NoteItemList(
         horizontalAlignment = Alignment.End
     ) {
         itemsIndexed(noteItems) { index, item ->
-            NoteItem(item, onClick = {
-                onClick(it)
+            if (item.noteType == NoteType.IMAGE){
+                NoteImageItem(
+                    item,
+                    onClick = {
+                        onClick(it)
+                    },
+                    imageUtil = imageUtil
+                )
+            }else {
+                NoteItem(item, onClick = {
+                    onClick(it)
 
-            })
+                })
+            }
         }
     }
 }
@@ -575,175 +634,4 @@ private fun shareSelection(
         }
     }
 
-}
-
-
-
-@Composable
-fun ShowFullImageDialog(
-    imageUtil: ImageUtil,
-    sharedViewModel: SharedViewModel,
-    groupUuid: Long,
-    noteGroup: NoteGroup,
-    updateDialogState: (Boolean) -> Unit,
-    dialogState: Boolean
-) {
-    val scope = rememberCoroutineScope()
-
-    var imageBitmap by remember { mutableStateOf<ImageBitmap?>(null) }
-    var imageByteArray by remember { mutableStateOf<ByteArray>(byteArrayOf()) }
-    var savedImagePath by remember { mutableStateOf<String?>(null) }
-    var savedImageBitmap by remember { mutableStateOf<ImageBitmap?>(null) }
-
-    imageUtil.registerPicker {
-        imageByteArray = it
-        imageBitmap = imageUtil.rememberImageBitmapFromByteArray(it)
-    }
-
-    val imageUiState by sharedViewModel.noteImageState.collectAsState()
-
-    LaunchedEffect(imageUiState.noteList) {
-        savedImageBitmap = if (imageUiState.noteList.isNotEmpty()) {
-            imageUtil.getImage(imageUiState.noteList.last().text)
-        } else {
-            null
-        }
-
-    }
-    if (dialogState) {
-
-        Dialog(onDismissRequest = { }) {
-            Box(
-                modifier = Modifier.fillMaxSize().background(
-                    color = Color.White, shape = RoundedCornerShape(
-                        CornerSize(16.dp)
-                    )
-                )
-
-            ) {
-                Column(modifier = Modifier.fillMaxSize()) {
-                    Text(
-                        modifier = Modifier.align(Alignment.CenterHorizontally)
-                            .padding(top = 16.dp),
-                        text = "--Selected Image--",
-                        fontWeight = FontWeight.Bold
-                    )
-
-                    Box(
-                        modifier = Modifier.fillMaxWidth().padding(8.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        imageBitmap?.let {
-                            Image(
-                                modifier = Modifier.fillMaxWidth().height(250.dp),
-                                bitmap = it,
-                                contentScale = ContentScale.FillBounds,
-                                contentDescription = "Image"
-                            )
-                        }
-
-                        IconButton(
-                            modifier = Modifier.background(color = Color.White, shape = CircleShape)
-                                .align(Alignment.TopEnd).padding(4.dp), onClick = {
-                                updateDialogState(false)
-                            }) {
-                            Icon(imageVector = Icons.Default.Close, contentDescription = "Close")
-
-                        }
-                        IconButton(
-                            modifier = Modifier.background(color = Color.White, shape = CircleShape)
-                                .align(Alignment.TopStart).padding(4.dp), onClick = {
-                                imageUtil.pickImage()
-                            }) {
-                            Icon(imageVector = Icons.Default.Edit, contentDescription = "Select")
-
-                        }
-                    }
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.End,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        imageBitmap?.let {
-                            Button(onClick = {
-                                scope.launch {
-                                    val path = imageUtil.saveImage(imageByteArray)
-                                    savedImagePath = path
-                                    path?.let {
-                                        val note = Note(
-                                            id = Clock.System.now().toEpochMilliseconds(),
-                                            text = it,
-                                            groupUuid = groupUuid,
-                                            groupId = noteGroup.id!!,
-                                            noteType = NoteType.IMAGE,
-                                            dateCreated = Clock.System.now().toEpochMilliseconds()
-                                        )
-                                        sharedViewModel.addNote(note)
-                                    } ?: Logger.d("JOENOTETAG") { "save Image path(null): $path" }
-                                }
-                            }) {
-                                Text("Save")
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.width(8.dp))
-
-                        Button(onClick = {
-                            imageBitmap = null
-                        }) {
-                            Text("Clear")
-                        }
-                        Spacer(modifier = Modifier.width(16.dp))
-                    }
-
-                    Text(
-                        modifier = Modifier.align(Alignment.CenterHorizontally)
-                            .padding(top = 10.dp),
-                        text = "--Last Saved Image--",
-                        fontWeight = FontWeight.Bold
-                    )
-
-                    Box(
-                        modifier = Modifier.fillMaxWidth().padding(8.dp),
-                        contentAlignment = Alignment.Center
-                    )
-                    {
-                        savedImageBitmap?.let {
-                            Image(
-                                modifier = Modifier.fillMaxWidth().height(250.dp),
-                                bitmap = it,
-                                contentScale = ContentScale.FillBounds,
-                                contentDescription = "Image"
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.width(8.dp))
-
-                    if (imageUiState.noteList.isNotEmpty()) {
-                        Button(
-                            modifier = Modifier.align(Alignment.End).padding(end = 16.dp),
-                            onClick = {
-                                scope.launch(Dispatchers.IO) {
-                                    val lastNote = imageUiState.noteList.last()
-                                    sharedViewModel.deleteNote(lastNote.id)
-                                    imageUtil.deleteImage(lastNote.text)
-                                }
-                            }) {
-                            Text("Delete")
-                        }
-                    }
-                }
-            }
-
-        }
-
-        DisposableEffect(scope) {
-            onDispose {
-                scope.cancel("Image Operation Scope closed")
-            }
-        }
-
-    }
 }

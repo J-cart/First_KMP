@@ -57,6 +57,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.tutorials.firstkmp.PlatformUtil
 import com.tutorials.firstkmp.domain.NoteGroup
 import com.tutorials.firstkmp.presentation.SharedViewModel
 import org.jetbrains.compose.resources.ExperimentalResourceApi
@@ -68,10 +69,12 @@ import org.jetbrains.compose.resources.painterResource
 fun NoteHomeScreen(
     onViewGroupNavigate: (Long) -> Unit,
     onAddGroupNavigate: () -> Unit,
-    sharedViewModel: SharedViewModel
+    sharedViewModel: SharedViewModel,
+    platformUtil: PlatformUtil
 ) {
 
-
+    val imageUtil = platformUtil.createImagePicker()
+    imageUtil.initUtil()
     val lazyListState = rememberLazyListState()
 
 
@@ -179,7 +182,7 @@ fun NoteHomeScreen(
                 },
                 dialogState = singleDialogState,
                 text = deleteDialogText
-            ) { noteToDelete.id?.let { sharedViewModel.deleteNoteGroup(it) } }
+            ) { noteToDelete.id?.let { sharedViewModel.deleteNoteGroup(id=it, imageUtil = imageUtil) } }
 
         }
     }

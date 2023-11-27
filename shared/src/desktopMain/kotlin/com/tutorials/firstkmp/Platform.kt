@@ -2,7 +2,6 @@ package com.tutorials.firstkmp
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.ImageBitmap
-import com.squareup.sqldelight.db.SqlDriver
 
 
 
@@ -38,6 +37,10 @@ actual class ImageUtil{
 
     @Composable
     actual fun registerPicker(onImagePicked: (ByteArray) -> Unit) {
+    }
+
+    @Composable
+    actual fun initUtil() {
 
     }
     actual fun pickImage() {

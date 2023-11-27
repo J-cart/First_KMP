@@ -33,7 +33,7 @@ fun PreComposeNavHost(
                 navigator.navigate(NoteNavigationRoute.NoteGroupItemScreen.navigateWithArgs(it))
             }, onAddGroupNavigate = {
                 navigator.navigate(NoteNavigationRoute.AddEditNoteGroupScreen.route)
-            }, sharedViewModel = sharedViewModel)
+            }, sharedViewModel = sharedViewModel,platformUtil = platformUtil)
         }
 
         scene(
@@ -64,7 +64,8 @@ fun PreComposeNavHost(
                 },
                 onNavigateUp = {
                     navigator.goBack()
-                }
+                },
+                platformUtil = platformUtil
             )
         }
 

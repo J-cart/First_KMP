@@ -19,15 +19,7 @@ class SqlDelightNoteDataSourceImpl(db: NoteDatabase) : NoteDataSource {
         val noteFlow = query.getAllNotes().asFlow().mapToList()
         return noteFlow.map {
             it.map { note ->
-                Note(
-                    id = note.id,
-                    text = note.text,
-                    noteType = note.noteType.toInt(),
-                    groupUuid = note.groupUuid,
-                    groupId = note.groupId,
-                    isSelected = note.isSelected,
-                    dateCreated = note.dateCreated
-                )
+                note.toNote()
             }
         }
     }
@@ -47,6 +39,7 @@ class SqlDelightNoteDataSourceImpl(db: NoteDatabase) : NoteDataSource {
             id = note.id,
             text = note.text,
             noteType = note.noteType.toLong(),
+            media = note.media,
             groupId=note.groupId,
             groupUuid=note.groupUuid,
             isSelected = note.isSelected,
@@ -85,20 +78,17 @@ class SqlDelightNoteDataSourceImpl(db: NoteDatabase) : NoteDataSource {
 
     override suspend fun getNotesById(idList: List<Long>): List<Note> {
         val list = mutableListOf<Note>()
-        /*query.transaction {
+        query.transaction {
             idList.forEach {
                 query.getNoteById(it).executeAsOneOrNull()?.toNote()?.let { note ->
                     list.add(note)
                 }
             }
-        }*/
-        idList.forEach {
-            getNoteById(it)?.let { note ->
-                list.add(note)
-            }
         }
         return list
     }
+
+
 
     //region NOTE GROUP
     override fun getAllNoteGroup(): Flow<List<NoteGroup>> {

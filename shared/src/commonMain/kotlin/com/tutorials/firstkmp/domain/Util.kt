@@ -7,6 +7,7 @@ fun NoteEntity.toNote(): com.tutorials.firstkmp.domain.Note {
     return com.tutorials.firstkmp.domain.Note(
         id = id,
         text = text,
+        media = media,
         noteType = noteType.toInt(),
         groupId = groupId,
         groupUuid = groupUuid,

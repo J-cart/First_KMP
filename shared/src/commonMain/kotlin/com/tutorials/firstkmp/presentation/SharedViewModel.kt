@@ -1,5 +1,6 @@
 package com.tutorials.firstkmp.presentation
 
+import com.tutorials.firstkmp.ImageUtil
 import com.tutorials.firstkmp.domain.Note
 import com.tutorials.firstkmp.domain.NoteDataSource
 import com.tutorials.firstkmp.domain.NoteGroup
@@ -17,9 +18,6 @@ class SharedViewModel(private val noteDataSource: NoteDataSource) : ViewModel() 
         private set
 
     var noteState = MutableStateFlow<NoteUiState>(NoteUiState())
-        private set
-
-    var noteImageState = MutableStateFlow<NoteUiState>(NoteUiState())
         private set
 
     var allNoteGroupState = MutableStateFlow<NoteGroupUiState>(NoteGroupUiState())
@@ -41,7 +39,6 @@ class SharedViewModel(private val noteDataSource: NoteDataSource) : ViewModel() 
         viewModelScope.launch {
             noteDataSource.getAllNotesByGroup(uuid).collect { note ->
                 allNotesState.update { it.copy(noteList = note) }
-                noteImageState.update { it.copy(noteList = note.filter { mNote -> mNote.noteType == NoteType.IMAGE }) }
             }
         }
     }
@@ -76,8 +73,20 @@ class SharedViewModel(private val noteDataSource: NoteDataSource) : ViewModel() 
         }
     }
 
-    fun deleteNotesInIdList(idList: List<Long>) {
+    fun deleteNotesInIdList(imageUtil: ImageUtil, idList: List<Long>) {
         viewModelScope.launch {
+            val notes = mutableListOf<Note>()
+            val allNotes = allNotesState.value.noteList
+            if (allNotes.isNotEmpty()) {
+                allNotes.forEach {
+                    if (it.id in idList) {
+                        notes.add(it)
+                    }
+                }
+                notes.forEach {
+                    it.media?.let { media -> imageUtil.deleteImage(media) }
+                }
+            }
             noteDataSource.deleteNoteInIdList(idList)
         }
     }
@@ -117,8 +126,14 @@ class SharedViewModel(private val noteDataSource: NoteDataSource) : ViewModel() 
         }
     }
 
-    fun deleteNoteGroup(id: Long) {
+    fun deleteNoteGroup(id: Long, imageUtil: ImageUtil) {
         viewModelScope.launch(Dispatchers.IO) {
+            val allNotes = allNotesState.value.noteList
+            if (allNotes.first().groupId == id) {
+                allNotes.filter { it.noteType == NoteType.IMAGE }.forEach {
+                    it.media?.let { media -> imageUtil.deleteImage(media) }
+                }
+            }
             noteDataSource.deleteNoteGroupById(id)
             deleteAllNoteById(id)
         }

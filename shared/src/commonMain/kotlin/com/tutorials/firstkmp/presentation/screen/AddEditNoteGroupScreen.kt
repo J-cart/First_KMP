@@ -40,6 +40,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.tutorials.firstkmp.PlatformUtil
 import com.tutorials.firstkmp.domain.NoteGroup
 import com.tutorials.firstkmp.domain.time.DateTimeUtil
 import com.tutorials.firstkmp.presentation.SharedViewModel
@@ -53,7 +54,8 @@ fun AddEditNoteGroup(
     onNavigateUp: () -> Unit,
     onNavigate: (Long) -> Unit,
     onEditNavigate: () -> Unit,
-    onDeleteNavigate: () -> Unit
+    onDeleteNavigate: () -> Unit,
+    platformUtil: PlatformUtil
 ) {
     var noteGroupTitle by remember {
         mutableStateOf("")
@@ -70,6 +72,9 @@ fun AddEditNoteGroup(
             sharedViewModel.getNoteGroupByUuid(it)
         }
     }
+
+    val imageUtil = platformUtil.createImagePicker()
+    imageUtil.initUtil()
 
     noteGroupUuid?.let {
         noteGroupUiState.noteGroup?.let { nGroup ->
@@ -95,7 +100,7 @@ fun AddEditNoteGroup(
                 noteGroup.id?.let {
                     IconButton(onClick = {
                         /*TODO: delete note group*/
-                        sharedViewModel.deleteNoteGroup(it)
+                        sharedViewModel.deleteNoteGroup(id=it,imageUtil = imageUtil)
                         onDeleteNavigate()
                     }) {
                         Icon(imageVector = Icons.Default.Delete, contentDescription = "Delete")

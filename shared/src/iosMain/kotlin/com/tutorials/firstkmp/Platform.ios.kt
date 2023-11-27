@@ -27,9 +27,15 @@ actual class PlatformUtil{
 
 actual class ImageUtil{
     @Composable
-   actual fun registerPicker(onImagePicked:(ByteArray)->Unit){
+    actual fun initUtil() {
+        // TODO: init platform image picker
+    }
+
+    @Composable
+    actual fun registerPicker(onImagePicked: (ByteArray) -> Unit) {
         // TODO: platform image picker
-   }
+    }
+
 
   actual  fun pickImage(){
       // TODO: platform image picker initialization

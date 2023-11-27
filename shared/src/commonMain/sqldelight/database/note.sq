@@ -1,5 +1,3 @@
-import java.lang.Boolean;
-import java.util.List;
 
 CREATE TABLE NoteEntity(
     id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
@@ -8,6 +6,7 @@ CREATE TABLE NoteEntity(
     text TEXT NOT NULL,
     isSelected INTEGER NOT NULL,
     noteType INTEGER NOT NULL,
+    media TEXT,
     dateCreated INTEGER NOT NULL
 );
 
@@ -21,7 +20,7 @@ getNoteById:
 SELECT * FROM NoteEntity WHERE id = ?;
 
 insertNote:
-INSERT OR REPLACE INTO NoteEntity(id,text,groupId,isSelected,groupUuid,noteType,dateCreated) VALUES(?,?,?,?,?,?,?);
+INSERT OR REPLACE INTO NoteEntity(id,text,media,groupId,isSelected,groupUuid,noteType,dateCreated) VALUES(?,?,?,?,?,?,?,?);
 
 deleteNoteById:
 DELETE FROM NoteEntity WHERE id = ?;
