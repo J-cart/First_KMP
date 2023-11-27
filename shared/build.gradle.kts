@@ -6,18 +6,13 @@ plugins {
 }
 
 kotlin {
-    androidTarget {
-        compilations.all {
-            kotlinOptions {
-                jvmTarget = "17"
-            }
-        }
-    }
+    androidTarget()
 
     jvm("desktop") {
-        jvmToolchain(17)
+        compilations.all {
+            kotlinOptions.jvmTarget = "17"
+        }
     }
-
     
     listOf(
         iosX64(),
@@ -58,6 +53,9 @@ kotlin {
                 //precompose navigation
                 val precompose_version = "1.5.7"
                 api("moe.tlaster:precompose:$precompose_version")
+
+                //okio for file directory access
+                implementation("com.squareup.okio:okio:3.6.0")
             }
         }
 
