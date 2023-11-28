@@ -6,10 +6,13 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.util.Log
 import android.widget.Toast
+import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.result.launch
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.graphics.ImageBitmap
@@ -18,6 +21,7 @@ import androidx.compose.ui.platform.LocalContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
 
@@ -58,6 +62,7 @@ actual class ImageUtil{
     private lateinit var getContent: ActivityResultLauncher<String>
     private lateinit var mContext: Context
     private lateinit var ioScope:CoroutineScope
+    private lateinit var cameraLauncher:ManagedActivityResultLauncher<Void?,Bitmap?>
 
     @Composable
     actual fun initUtil(){
@@ -81,6 +86,20 @@ actual class ImageUtil{
     }
     actual fun pickImage() {
         getContent.launch("image/*")
+    }
+
+    @Composable
+    actual fun registerOnImageCaptured(onImageCaptured:(ByteArray?)->Unit){
+         cameraLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicturePreview()){result->
+            result?.let {
+                onImageCaptured(convertBitmapToByteArray(it))
+                Log.d("JOENOTETAG", "bitmap-> $it")
+            }?: Log.d("JOENOTETAG", "bitmap (null)-> $result")
+        }
+    }
+
+    actual fun captureImage(){
+        cameraLauncher.launch()
     }
 
     actual fun rememberImageBitmapFromByteArray(bytes:ByteArray?): ImageBitmap?{
@@ -143,6 +162,26 @@ fun saveBitmapToFile(bytes:ByteArray, filePath: String) {
     bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
 }
 
+fun convertBitmapToByteArray(bitmap:Bitmap):ByteArray{
+    val byteOS = ByteArrayOutputStream()
+    bitmap.compress(Bitmap.CompressFormat.JPEG,100, byteOS)
+    return byteOS.toByteArray()
+}
+
+
+/*@Composable
+fun CameraUtil(onLaunch:(ManagedActivityResultLauncher<Void?,Bitmap?>)->Unit,onImageCaptured:(Bitmap?)->Unit) {
+
+    val cameraLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicturePreview()){result->
+       result?.let {
+           onImageCaptured(it)
+           Log.d("JOENOTETAG", "bitmap-> $it")
+       }?: Log.d("JOENOTETAG", "bitmap (null)-> $result")
+    }
+
+    onLaunch(cameraLauncher)
+
+}*/
 
 
 

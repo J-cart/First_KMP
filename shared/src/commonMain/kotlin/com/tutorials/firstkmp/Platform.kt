@@ -27,6 +27,12 @@ expect class ImageUtil {
 
     fun rememberImageBitmapFromByteArray(bytes:ByteArray?):ImageBitmap?
 
+    @Composable
+    fun registerOnImageCaptured(onImageCaptured:(ByteArray?)->Unit)
+
+    fun captureImage()
+
+
     suspend fun saveImage(bytes: ByteArray?):String?
 
     suspend fun getImage(fileName: String):ImageBitmap?

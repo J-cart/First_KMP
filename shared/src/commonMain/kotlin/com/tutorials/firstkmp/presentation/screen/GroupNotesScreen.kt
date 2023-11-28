@@ -140,6 +140,24 @@ fun NoteGroupItemScreen(
         }
     }
 
+    imageUtil.registerOnImageCaptured {bArray->
+        imageNoteScope.launch(Dispatchers.IO) {
+            val path = imageUtil.saveImage(bArray)
+            path?.let {
+                val note = Note(
+                    id = Clock.System.now().toEpochMilliseconds(),
+                    text = "IMAGE",
+                    media = it,
+                    groupUuid = groupUuid,
+                    groupId = noteGroup.id!!,
+                    noteType = NoteType.IMAGE,
+                    dateCreated = Clock.System.now().toEpochMilliseconds()
+                )
+                sharedViewModel.addNote(note)
+            }
+        }
+    }
+
     Scaffold(topBar = {
         TopAppBar(
             title = { Text(text = noteGroup.title, modifier = Modifier.padding(start = 10.dp)) },
@@ -244,7 +262,8 @@ fun NoteGroupItemScreen(
                             }
                         },
                         onSelectAttachment = {
-                            imageUtil.pickImage()
+//                            imageUtil.pickImage()
+                            imageUtil.captureImage()
                         },
                         isEditMode = isEditMode
                     )

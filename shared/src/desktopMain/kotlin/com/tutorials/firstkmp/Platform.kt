@@ -31,10 +31,6 @@ actual class PlatformUtil {
 
 actual class ImageUtil{
 
-    /*private lateinit var getContent: ActivityResultLauncher<String>
-    private lateinit var mContext: Context
-    private lateinit var ioScope: CoroutineScope*/
-
     @Composable
     actual fun registerPicker(onImagePicked: (ByteArray) -> Unit) {
     }
@@ -46,6 +42,12 @@ actual class ImageUtil{
     actual fun pickImage() {
 
     }
+
+    @Composable
+    actual fun registerOnImageCaptured(onImageCaptured: (ByteArray?) -> Unit) {
+    }
+
+    actual fun captureImage() {}
 
     actual fun rememberImageBitmapFromByteArray(bytes:ByteArray?): ImageBitmap?{
        return null

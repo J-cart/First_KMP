@@ -41,6 +41,11 @@ actual class ImageUtil{
       // TODO: platform image picker initialization
   }
 
+    @Composable
+    actual fun registerOnImageCaptured(onImageCaptured: (ByteArray?) -> Unit) {
+    }
+
+    actual fun captureImage() {}
     actual fun rememberImageBitmapFromByteArray(bytes: ByteArray?): ImageBitmap? {
         // TODO: convert byteArray to imageBitmap
         return null
