@@ -1,8 +1,8 @@
 package com.tutorials.firstkmp.android
 
 import android.os.Bundle
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -18,8 +18,8 @@ import com.tutorials.firstkmp.presentation.screen.MainView
 import com.tutorials.firstkmp.presentation.ui.theme.NoteTheme
 import moe.tlaster.precompose.PreComposeApp
 
-class MainActivity : ComponentActivity() {
-    private val db = NoteDatabase(driver = DatabaseDriverFactory(this).createDriver())
+class MainActivity : AppCompatActivity() {
+    private val db by lazy {   NoteDatabase(driver = DatabaseDriverFactory(this).createDriver())}
     private val platformUtil = PlatformUtil(this)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

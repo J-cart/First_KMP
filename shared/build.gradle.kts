@@ -42,6 +42,9 @@ kotlin {
                 api("dev.icerock.moko:mvvm-compose:0.16.1") // api mvvm-core, getViewModel for Compose Multiplatfrom
                 api("dev.icerock.moko:mvvm-flow-compose:0.16.1") // api mvvm-flow, binding extensions for Compose Multiplatform
                 api("dev.icerock.moko:mvvm-flow:0.16.1") // api mvvm-core, CFlow for native and binding extensions
+                // compose multiplatform
+                api("dev.icerock.moko:permissions-compose:0.16.0") // permissions api + compose extensions
+
 
                 implementation("co.touchlab:kermit:2.0.2")//kermit for logging
 

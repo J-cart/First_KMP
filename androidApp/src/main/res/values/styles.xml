@@ -1,3 +1,6 @@
 <resources>
-    <style name="AppTheme" parent="android:Theme.Material.NoActionBar"/>
+    <!--added for Moko permission which required Theme.Appcompat-->
+    <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar"/>
+<!--    <style name="AppTheme" parent="android:Theme.Material.NoActionBar"/>-->
+
 </resources>

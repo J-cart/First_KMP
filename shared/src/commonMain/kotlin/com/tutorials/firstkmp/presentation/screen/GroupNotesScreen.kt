@@ -62,6 +62,11 @@ import com.tutorials.firstkmp.domain.Note
 import com.tutorials.firstkmp.domain.NoteGroup
 import com.tutorials.firstkmp.domain.NoteType
 import com.tutorials.firstkmp.presentation.SharedViewModel
+import dev.icerock.moko.permissions.DeniedAlwaysException
+import dev.icerock.moko.permissions.DeniedException
+import dev.icerock.moko.permissions.Permission
+import dev.icerock.moko.permissions.compose.BindEffect
+import dev.icerock.moko.permissions.compose.rememberPermissionsControllerFactory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -157,6 +162,11 @@ fun NoteGroupItemScreen(
             }
         }
     }
+
+    val factory = rememberPermissionsControllerFactory()
+    val controller = remember(factory) { factory.createPermissionsController() }
+    val permissionScope = rememberCoroutineScope()
+    BindEffect(controller)
 
     Scaffold(topBar = {
         TopAppBar(
@@ -263,7 +273,17 @@ fun NoteGroupItemScreen(
                         },
                         onSelectAttachment = {
 //                            imageUtil.pickImage()
-                            imageUtil.captureImage()
+                            permissionScope.launch {
+                                try {
+                                    controller.providePermission(Permission.CAMERA)
+                                    imageUtil.captureImage()
+                                } catch (deniedAlways: DeniedAlwaysException) {
+                                    controller.openAppSettings()
+                                } catch (denied: DeniedException) {
+                                    //permission denied
+                                }
+                            }
+
                         },
                         isEditMode = isEditMode
                     )

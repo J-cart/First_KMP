@@ -62,7 +62,7 @@ actual class ImageUtil{
     private lateinit var getContent: ActivityResultLauncher<String>
     private lateinit var mContext: Context
     private lateinit var ioScope:CoroutineScope
-    private lateinit var cameraLauncher:ManagedActivityResultLauncher<Void?,Bitmap?>
+    private lateinit var cameraLauncher: ManagedActivityResultLauncher<Void?, Bitmap?>
 
     @Composable
     actual fun initUtil(){
